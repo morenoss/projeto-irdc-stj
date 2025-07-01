@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Preditiva de Risco de Descumprimento Contratual: Um Modelo Contábil de Apoio à Decisão no Setor Público Brasileiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Strategic Accents -->
+    <!-- Application Structure Plan: A single-page, section-based dashboard. The structure guides the user from the high-level problem and solution (Overview, Research Project), to deep-dive interactive explorations (Predictive Analysis with Plotly, Management Tool with embedded Power BI) and supplementary materials (Appendix). This non-linear, thematic structure was chosen over the report's linear format to empower users to directly access the information most relevant to them, enhancing usability and engagement. Key interactions include the accordion, Plotly chart hovers/zoom, and exploring the live Power BI dashboard. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Research Framework (7 points) -> Goal: Inform/Organize -> Viz: Interactive Accordion -> Justification: Presents detailed academic context in a structured, user-controlled manner.
+        - Report Info: Methodology Flow (Fig 1) -> Goal: Organize -> Viz: HTML/CSS Diagram -> Justification: Clean, static representation of the process, corrected to match the source document's flow.
+        - Report Info: Model Coefficients (Full Data) -> Goal: Compare -> Viz: Plotly.js Horizontal Bar Chart -> Interaction: Rich hover tooltips, zoom/pan -> Justification: Provides a more professional and interactive visualization, as requested, using a symmetric log scale for readability.
+        - Report Info: Live Dashboard (Power BI) -> Goal: Relate/Organize/Explore -> Viz: Embedded iframe -> Interaction: Full Power BI interactivity -> Justification: Provides the complete, real-world tool for exploration.
+        - Report Info: Risk Treatment Plan (Fig 9) -> Goal: Inform -> Viz: HTML/CSS Cards -> Justification: Presents actionable guidelines clearly.
+        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List -> Justification: Provides access to source materials.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            width: 100%;
+        }
+        #analysis-chart-container {
+             height: 80vh;
+             min-height: 600px;
+             max-height: 800px;
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #2563eb; /* blue-600 */
+            transition: width 0.3s;
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-button svg {
+            transition: transform 0.3s ease-out;
+        }
+        .accordion-button.active svg {
+            transform: rotate(180deg);
+        }
+        .method-arrow-right::after {
+            content: '→';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            color: #94a3b8; /* slate-400 */
+        }
+        .method-arrow-down::after {
+            content: '↓';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            color: #94a3b8; /* slate-400 */
+        }
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
+                <img src="assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#overview" class="nav-link active">Visão Geral</a>
+                <a href="#research-project" class="nav-link">Projeto</a>
+                <a href="#methodology" class="nav-link">Metodologia</a>
+                <a href="#analysis" class="nav-link">Análise</a>
+                <a href="#tool" class="nav-link">Painel BI</a>
+                <a href="#plan" class="nav-link">Plano de Ação</a>
+                <a href="#appendix" class="nav-link">Apêndice</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-3xl md:text-5xl font-extrabold text-slate-800 leading-tight">
+                    Gestão de Riscos em Contratações Públicas Brasileiras:
+                    <span class="block text-2xl md:text-4xl font-semibold mt-2 text-slate-700">Um Modelo Contábil-Preditivo Aplicado no Superior Tribunal de Justiça</span>
+                </h1>
+                <p class="mt-6 text-lg md:text-xl text-slate-600 max-w-4xl mx-auto">
+                    Integração de informações contábeis e econômico-financeiras dos fornecedores do STJ na gestão efetiva de riscos contratuais, alinhando-se aos Objetivos de Desenvolvimento Sustentável (ODS), especialmente no fortalecimento institucional e promoção de transparência.
+                </p>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                    <div class="bg-slate-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-lg text-slate-800">O Desafio</h3>
+                        <p class="mt-2 text-slate-600">A dificuldade de acesso a dados contábeis estruturados de fornecedores é um grande obstáculo. Este estudo foi viabilizado pela criação de um cadastro de informações inovador no STJ.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-lg border-2 border-blue-500">
+                        <h3 class="font-bold text-lg text-slate-800">A Evolução Proposta</h3>
+                        <p class="mt-2 text-slate-600">Evoluir o modelo teórico do Índice de Risco de Descumprimento Contratual (IRDC) para uma solução tecnológica e interativa, totalmente operacionalizada no STJ.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-lg text-slate-800">O Impacto</h3>
+                        <p class="mt-2 text-slate-600">Fortalecer a governança, otimizar a alocação de recursos de fiscalização e promover uma gestão baseada em evidências, alinhada aos ODS 9 e 16.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="research-project" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Estrutura do Projeto de Pesquisa</h2>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Explore os fundamentos, a justificativa e as contribuições do trabalho no campo da contabilidade financeira.</p>
+                </div>
+                <div id="accordion-container" class="max-w-4xl mx-auto space-y-4">
+                    <div class="bg-white border border-slate-200 rounded-lg">
+                        <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>1. Questão de Pesquisa</span>
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-slate-200 text-slate-600">
+                                <p>"Como aplicar um método contábil preditivo de forma prática na gestão de riscos em contratações públicas?"</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-lg">
+                        <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>2. Argumentos Teóricos e Fundamentação Econômica</span>
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-slate-200 text-slate-600">
+                                <ul class="list-disc space-y-2 pl-5">
+                                    <li>Governança e inovação pública exigem decisões baseadas em dados e evidências (Mulgan & Albury, 2003; OCDE, 2018).</li>
+                                    <li>A contabilidade pode e deve ser usada como instrumento para aprimorar a gestão de riscos e promover transparência, indo além do uso apenas “cerimonial” de dados (Azevedo & Ribeiro, 2020; Rikhardsson & Yigitbasioglu, 2018).</li>
+                                    <li>Fundamentos de análise de risco, Teoria dos Custos de Transação e modelos preditivos sustentam a proposta (COSO, 2018; Williamson, 1996).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-lg">
+                        <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>3. Importância e Justificativa</span>
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-slate-200 text-slate-600">
+                                <ul class="list-disc space-y-2 pl-5">
+                                    <li>Atende à necessidade prática de inovação no setor público, em linha com os ODS (9 e 16).</li>
+                                    <li>Supre a ausência de integração sistemática de informações contábeis à gestão de riscos em contratações públicas.</li>
+                                    <li>Reforça a governança e eficiência no uso de recursos públicos, permitindo alocação racional de esforços de fiscalização e monitoramento.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-lg">
+                        <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>4. Gap de Literatura e Diferenciais</span>
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-slate-200 text-slate-600 space-y-4">
+                                <div>
+                                    <h4 class="font-semibold text-slate-700">Gap Identificado:</h4>
+                                    <p class="mt-1">Poucos estudos orientam a adoção prática de modelos contábeis preditivos para gestão de risco contratual no setor público brasileiro, especialmente com a integração de ferramentas de BI.</p>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-slate-700">Diferenciais vs. Artigo Predecessor (Santiago et al.):</h4>
+                                    <ul class="list-disc space-y-2 pl-5 mt-1">
+                                        <li><b>Operacionalização:</b> Mostra como aplicar o IRDC em um contexto real, com dashboards e matriz de risco interativa.</li>
+                                        <li><b>Inovação Técnica:</b> Implementa técnicas avançadas como LASSO, SMOTENC e ensemble de modelos.</li>
+                                        <li><b>Framework Replicável:</b> Propõe um modelo que conecta teoria, tecnologia e gestão, adaptável a outros órgãos públicos.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="bg-white border border-slate-200 rounded-lg">
+                        <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
+                            <span>5. Como a Questão Será Respondida</span>
+                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-5 border-t border-slate-200 text-slate-600">
+                                 <ul class="list-disc space-y-2 pl-5">
+                                    <li>Através de um estudo de caso prático no STJ, com dados de fornecedores de 2018-2023.</li>
+                                    <li>Construção, validação e comparação de modelos logísticos (stepwise e LASSO) para prever falhas na execução contratual.</li>
+                                    <li>Desenvolvimento de um painel de BI e uma matriz Probabilidade x Impacto como ferramenta de decisão.</li>
+                                    <li>Aprofundamento do IRDC de Santiago et al. (2025, no prelo), consolidando-o em uma matriz de risco inspirada no framework do STJ.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="methodology" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Metodologia Detalhada</h2>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">O processo foi estruturado para construir e validar uma robusta matriz de riscos, combinando tratamento de dados, modelagem preditiva e regras de negócio.</p>
+                </div>
+
+                <div class="mb-16">
+                    <h3 class="text-2xl font-bold text-center text-slate-700 mb-8">Fluxo de Construção da Dimensão de Probabilidade</h3>
+                    <div class="space-y-8 md:space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-sm">
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Importação e Transformação</strong><p class="text-xs mt-1">Consolidação dos dados contábeis e cadastrais, análise descritiva e preparação da base.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Winsorização de Variáveis</strong><p class="text-xs mt-1">Corte nos percentis 1% e 99% para mitigar outliers extremos.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Imputação de Dados Faltantes</strong><p class="text-xs mt-1">Preenchimento por por média (CV ≤ 30%) ou mediana (CV > 30%), para evitar distorção por outliers </p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-down"><strong>Estatísticas Descritivas</strong><p class="text-xs mt-1">Comparação entre grupos penalizados e não penalizados.</p></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-sm md:flex md:flex-row-reverse">
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Validação Cruzada (Holdout)</strong><p class="text-xs mt-1">Separação em treino (80%) e teste (20%).</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Balanceamento com SMOTENC</strong><p class="text-xs mt-1">Aplicação no Python para tratar desbalanceamento.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Agrupamento de CNAEs Raros</strong><p class="text-xs mt-1">CNAEs com baixa frequência agrupados para reduzir esparsidade.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg"><strong>Modelagem e Avaliação</strong><p class="text-xs mt-1">Estimativa dos modelos logit e validação por métricas preditivas.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-700 mb-4">Dimensão de Probabilidade</h3>
+                        <div class="space-y-4 text-slate-600">
+                            <p>Para estimar a probabilidade de falhas na execução contratual, comparamos dois modelos de regressão logística. O primeiro (IRDC10) usou a seleção de variáveis *stepwise*, enquanto o segundo empregou a técnica *LASSO*, que previne sobreajuste e melhora a interpretabilidade.</p>
+                            <p>A robustez foi garantida com técnicas de tratamento como <strong>winsorização</strong> (para mitigar outliers), <strong>validação holdout</strong> (80/20) e <strong>SMOTENC</strong> (para balancear a amostra de treino).</p>
+                            <h4 class="font-semibold text-slate-700 pt-4">Operacionalização e Ensemble</h4>
+                            <p>Os dois modelos (Stepwise e LASSO) foram implementados no Power BI. Adotamos uma abordagem de <strong>ensemble (comitê)</strong>, onde a classificação final de risco depende do consenso entre os modelos, aumentando a confiabilidade.</p>
+                            <div class="bg-white p-4 rounded-lg border mt-4">
+                                <table class="w-full text-left text-sm">
+                                    <caption class="text-sm font-semibold text-slate-700 mb-2">Tabela 1: Matriz de Classificação da Probabilidade</caption>
+                                    <thead class="bg-slate-100">
+                                        <tr>
+                                            <th class="p-2">Nível</th>
+                                            <th class="p-2">Regra de Decisão do Comitê</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b"><td class="p-2 font-bold text-red-600">3. Alta</td><td class="p-2">Consenso de Alto Risco: probabilidade acima do ponto de corte em ambos os modelos.</td></tr>
+                                        <tr class="border-b"><td class="p-2 font-bold text-amber-600">2. Média</td><td class="p-2">Divergência entre Modelos: probabilidade acima do ponto de corte em apenas um dos modelos.</td></tr>
+                                        <tr><td class="p-2 font-bold text-emerald-600">1. Baixa</td><td class="p-2">Consenso de Baixo Risco: probabilidade abaixo do ponto de corte em ambos os modelos.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-700 mb-4">Dimensão de Impacto</h3>
+                        <div class="space-y-4 text-slate-600">
+                            <p>A dimensão de impacto mede as consequências de uma eventual falha na execução contratual, baseando-se nos critérios de qualificação econômico-financeira (QEF) do STJ.</p>
+                            <p>A classificação é hierárquica: primeiro, avalia-se a <strong>criticidade do contrato</strong> (status "QEF Relevante" ou "QEF Padrão"). Em seguida, o <strong>valor do contrato</strong> é usado como critério decisivo, especialmente para casos onde a análise contábil é dispensada.</p>
+                             <div class="bg-white p-4 rounded-lg border mt-4">
+                                <table class="w-full text-left text-sm">
+                                     <caption class="text-sm font-semibold text-slate-700 mb-2">Tabela 2: Matriz de Classificação do Impacto</caption>
+                                    <thead class="bg-slate-100">
+                                        <tr>
+                                            <th class="p-2">Nível</th>
+                                            <th class="p-2">QEF Status da Empresa</th>
+                                            <th class="p-2">Valor do Contrato</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-b"><td rowspan="2" class="p-2 font-bold text-red-600 align-top">3. Alto</td><td class="p-2">QEF Relevante</td><td class="p-2">Qualquer valor</td></tr>
+                                        <tr class="border-b"><td class="p-2">QEF Padrão</td><td class="p-2">Qualquer valor</td></tr>
+                                        <tr class="border-b"><td class="p-2 font-bold text-amber-600">2. Média</td><td class="p-2">Não se aplica</td><td class="p-2">> R$ 100.000</td></tr>
+                                        <tr><td class="p-2 font-bold text-emerald-600">1. Baixo</td><td class="p-2">Não se aplica</td><td class="p-2">< R$ 100.000</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="analysis" class="py-16 md:py-24 bg-slate-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Análise Preditiva de Riscos</h2>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Os modelos estatísticos revelam os fatores mais influentes na previsão de penalidades e demonstram alta capacidade preditiva.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3 bg-white p-6 rounded-lg shadow-sm border">
+                        <h3 class="font-bold text-lg text-slate-800 mb-4">Forest Plot: Modelos IRDC10 vs LASSO</h3>
+                        <p class="text-sm text-slate-600 mb-4">O gráfico compara os coeficientes dos modelos. Passe o mouse sobre as barras para ver o valor original do coeficiente.</p>
+                        <div class="chart-container" id="analysis-chart-container">
+                            <div id="coefficientsChart" class="w-full h-full"></div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                             <h3 class="font-bold text-lg text-slate-800 mb-2">Desempenho dos Modelos</h3>
+                             <p class="text-sm text-slate-600 mb-4">O modelo LASSO se destacou pela sua precisão e robustez na base de teste.</p>
+                             <div class="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                    <p class="text-3xl font-bold text-blue-600">79%</p>
+                                    <p class="text-sm text-slate-500">Acurácia (LASSO)</p>
+                                </div>
+                                 <div>
+                                    <p class="text-3xl font-bold text-blue-600">93.1%</p>
+                                    <p class="text-sm text-slate-500">Especificidade (LASSO)</p>
+                                </div>
+                                 <div>
+                                    <p class="text-3xl font-bold text-slate-700">72%</p>
+                                    <p class="text-sm text-slate-500">Acurácia (Stepwise)</p>
+                                </div>
+                                 <div>
+                                    <p class="text-3xl font-bold text-slate-700">0.44</p>
+                                    <p class="text-sm text-slate-500">Kappa (LASSO)</p>
+                                </div>
+                             </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                             <h3 class="font-bold text-lg text-slate-800 mb-2">Principais Conclusões Preditivas</h3>
+                             <ul class="space-y-2 text-slate-600 list-disc list-inside">
+                                 <li>Baixa liquidez, alto endividamento e menor lucratividade são fortes indicadores de risco.</li>
+                                 <li>O modelo LASSO provou ser mais conservador e preciso na identificação de fornecedores confiáveis.</li>
+                                 <li>A combinação dos dois modelos (abordagem de comitê) oferece uma avaliação de risco mais robusta e confiável.</li>
+                             </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tool" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Painel de Informações Contábeis</h2>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Explore o painel de BI interativo desenvolvido para o STJ. A ferramenta permite a análise detalhada dos riscos contratuais em tempo real.</p>
+                </div>
+                <div class="w-full bg-white p-2 rounded-lg shadow-2xl border border-slate-200">
+                    <iframe title="Painel de Informações Contábeis das Contratações" width="100%" height="700" src="https://app.powerbi.com/view?r=eyJrIjoiM2I4ZDE0MmEtZjg3OS00ZTA4LWI5OTUtMjZjNTczODY0OGZiIiwidCI6ImRlMjNkNWYwLWNjYWMtNGM4NC04MWQ2LTI4OTJhOGMwNTVhYSJ9" frameborder="0" allowFullScreen="true"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <section id="plan" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Plano de Tratamento de Riscos</h2>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Ações recomendadas para cada nível de ameaça, orientando a tomada de decisão dos gestores.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="border-2 border-emerald-500 p-6 rounded-lg bg-emerald-50">
+                        <h3 class="font-bold text-xl text-emerald-800 mb-4">Ameaça Baixa</h3>
+                        <ul class="space-y-2 text-emerald-700 list-disc list-inside">
+                            <li>Atualização regular da QEF.</li>
+                            <li>Monitoramento padrão do contrato.</li>
+                            <li>Avaliação pontual pela CACC apenas se houver dúvidas.</li>
+                        </ul>
+                    </div>
+                     <div class="border-2 border-amber-400 p-6 rounded-lg bg-amber-50">
+                        <h3 class="font-bold text-xl text-amber-800 mb-4">Ameaça Média</h3>
+                         <ul class="space-y-2 text-amber-700 list-disc list-inside">
+                            <li>Atualização programada da QEF.</li>
+                            <li>Acompanhamento documental complementar.</li>
+                            <li>Fiscalização de rotina com mais atenção.</li>
+                            <li>Consulta à CACC em caso de inconsistências.</li>
+                        </ul>
+                    </div>
+                    <div class="border-2 border-red-400 p-6 rounded-lg bg-red-50">
+                        <h3 class="font-bold text-xl text-red-800 mb-4">Ameaça Alta</h3>
+                        <ul class="space-y-2 text-red-700 list-disc list-inside">
+                            <li>Atualização rápida da QEF.</li>
+                            <li>Participação ativa da CACC.</li>
+                            <li>Monitoramento periódico e rigoroso da empresa.</li>
+                            <li>Não é recomendável a prorrogação da vigência.</li>
+                        </ul>
+                    </div>
+                     <div class="border-2 border-red-600 p-6 rounded-lg bg-red-50">
+                        <h3 class="font-bold text-xl text-red-900 mb-4">Ameaça Crítica</h3>
+                         <ul class="space-y-2 text-red-800 list-disc list-inside">
+                             <li>Atualização prioritária e imediata da QEF.</li>
+                            <li>Diligências documentais intensificadas.</li>
+                            <li>Fiscalização contratual rigorosa.</li>
+                            <li>Expressamente recomendada a não renovação.</li>
+                         </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="appendix" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Apêndice: Materiais Suplementares</h2>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Acesso a documentos e scripts relacionados ao desenvolvimento do artigo.</p>
+                </div>
+                <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md border border-slate-200">
+                    <ul class="space-y-4">
+                        <li>
+                            <h4 class="font-semibold text-slate-800">1. Aceitação do artigo original</h4>
+                            <p class="text-sm text-slate-500">E-mail de aceitação do artigo "Informação Contábil e Risco de Descumprimento de Contratos...". <a href="#" class="text-blue-600 hover:underline">[Acesso ao PDF]</a></p>
+                        </li>
+                        <li>
+                            <h4 class="font-semibold text-slate-800">2. Versão aceita para publicação</h4>
+                            <p class="text-sm text-slate-500">Versão final do artigo-base aceita para publicação. <a href="#" class="text-blue-600 hover:underline">[Acesso ao PDF]</a></p>
+                        </li>
+                        <li>
+                            <h4 class="font-semibold text-slate-800">3. Do-file Stata</h4>
+                            <p class="text-sm text-slate-500">Script com os testes estatísticos utilizados no modelo. <a href="#" class="text-blue-600 hover:underline">[Acesso ao .do]</a></p>
+                        </li>
+                        <li>
+                            <h4 class="font-semibold text-slate-800">4. Log com resultados estatísticos</h4>
+                            <p class="text-sm text-slate-500">Log completo com os resultados gerados pelo script Stata. <a href="#" class="text-blue-600 hover:underline">[Acesso ao .log]</a></p>
+                        </li>
+                        <li>
+                            <h4 class="font-semibold text-slate-800">5. Link para o Painel de BI</h4>
+                            <p class="text-sm text-slate-500">Acesso direto ao Painel de Informações Contábeis das Contratações do STJ. <a href="https://app.powerbi.com/view?r=eyJrIjoiM2I4ZDE0MmEtZjg3OS00ZTA4LWI5OTUtMjZjNTczODY0OGZiIiwidCI6ImRlMjNkNWYwLWNjYWMtNGM4NC04MWQ2LTI4OTJhOGMwNTVhYSJ9" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Abrir em nova aba]</a></p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <h3 class="text-2xl font-bold">Conclusões e Contribuições</h3>
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto">
+                <div class="border-t-2 border-blue-500 pt-4">
+                    <h4 class="font-semibold text-lg">Para a Prática</h4>
+                    <p class="mt-2 text-slate-300">Entregamos uma solução tecnológica replicável que fortalece a governança, apoia a decisão baseada em evidências e promove o uso estratégico da informação contábil no setor público.</p>
+                </div>
+                 <div class="border-t-2 border-blue-500 pt-4">
+                    <h4 class="font-semibold text-lg">Para a Academia</h4>
+                    <p class="mt-2 text-slate-300">Preenchemos a lacuna de estudos técnico-tecnológicos ao demonstrar o "como fazer", detalhando a metodologia para transformar um modelo preditivo em uma inovação aplicada e funcional.</p>
+                </div>
+            </div>
+             <p class="mt-8 text-slate-400 text-sm">Este trabalho se alinha aos Objetivos de Desenvolvimento Sustentável (ODS) 9 (Inovação) e 16 (Instituições Eficazes e Transparentes).</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const fullCoefficientsData = [
+            { Variavel: 'Solvência Geral', Coef_IRDC10: null, Coef_LASSO: 0.0030023 },
+            { Variavel: 'Endividamento Geral', Coef_IRDC10: 0.0958537, Coef_LASSO: 0.0771067 },
+            { Variavel: 'Composição do Endividamento', Coef_IRDC10: null, Coef_LASSO: -0.1154793 },
+            { Variavel: 'Imobilização do PL', Coef_IRDC10: -0.5642994, Coef_LASSO: -0.5737773 },
+            { Variavel: 'Giro do Ativo', Coef_IRDC10: null, Coef_LASSO: -0.0761235 },
+            { Variavel: 'Margem Operacional', Coef_IRDC10: null, Coef_LASSO: -0.5699209 },
+            { Variavel: 'Margem Líquida', Coef_IRDC10: -1.022316, Coef_LASSO: -0.6511823 },
+            { Variavel: 'ROI', Coef_IRDC10: null, Coef_LASSO: -0.3410596 },
+            { Variavel: 'Empresa de Grande Porte', Coef_IRDC10: -1.320665, Coef_LASSO: -1.483931 },
+            { Variavel: 'Empresa de Médio Porte', Coef_IRDC10: null, Coef_LASSO: 0.0944994 },
+            { Variavel: 'Microentidade', Coef_IRDC10: -0.7687474, Coef_LASSO: -0.7654147 },
+            { Variavel: 'CNAEs Alto Risco (≥5)', Coef_IRDC10: null, Coef_LASSO: 18.304944 },
+            { Variavel: 'CNAEs Médio Risco (0-5)', Coef_IRDC10: null, Coef_LASSO: 1.864456 },
+            { Variavel: 'CNAEs Baixo Risco (<0)', Coef_IRDC10: null, Coef_LASSO: -7.762664 },
+            { Variavel: 'Demais CNAEs', Coef_IRDC10: null, Coef_LASSO: -1.559553 },
+            { Variavel: 'Sociedade Anônima Fechada', Coef_IRDC10: -4.836, Coef_LASSO: -2.475917 },
+            { Variavel: 'Sociedade Empresária Limitada', Coef_IRDC10: -1.304601, Coef_LASSO: 1.210131 },
+            { Variavel: 'Empresário (Individual)', Coef_IRDC10: -2.171917, Coef_LASSO: null },
+            { Variavel: 'Cooperativa', Coef_IRDC10: null, Coef_LASSO: -15.22853 },
+            { Variavel: 'Fundação Privada', Coef_IRDC10: null, Coef_LASSO: 3.144294 },
+            { Variavel: 'Associação Privada', Coef_IRDC10: null, Coef_LASSO: -15.89986 },
+            { Variavel: 'QtePenalOutrosOrgaos', Coef_IRDC10: 0.031828, Coef_LASSO: 0.0318955 },
+            { Variavel: 'QtdeCNAEsSecundarios', Coef_IRDC10: -0.0164641, Coef_LASSO: -0.0157101 },
+            { Variavel: 'log_vlrcontrato', Coef_IRDC10: 0.0715372, Coef_LASSO: 0.0725862 },
+            { Variavel: 'Idade Empresa', Coef_IRDC10: null, Coef_LASSO: 0.006491 }
+        ];
+
+        function symmetricLog(val) {
+            if (val === null || val === 0 || isNaN(val)) {
+                return 0;
+            }
+            return Math.sign(val) * Math.log10(1 + Math.abs(val));
+        }
+
+        const labels = fullCoefficientsData.map(d => d.Variavel);
+        const irdc10Data = fullCoefficientsData.map(d => d.Coef_IRDC10);
+        const lassoData = fullCoefficientsData.map(d => d.Coef_LASSO);
+
+        const transformedIrdc10 = irdc10Data.map(symmetricLog);
+        const transformedLasso = lassoData.map(symmetricLog);
+        
+        const plotData = [
+            {
+                y: labels,
+                x: transformedIrdc10,
+                name: 'IRDC10 (Stepwise)',
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: '#003f5c'
+                },
+                customdata: irdc10Data,
+                hovertemplate: '<b>%{y}</b><br>Modelo: IRDC10 (Stepwise)<br>Coeficiente Original: %{customdata:.4f}<extra></extra>'
+            },
+            {
+                y: labels,
+                x: transformedLasso,
+                name: 'LASSO',
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: '#FF7300',
+                    opacity: 0.85
+                },
+                customdata: lassoData,
+                hovertemplate: '<b>%{y}</b><br>Modelo: LASSO<br>Coeficiente Original: %{customdata:.4f}<extra></extra>'
+            }
+        ];
+
+        const layout = {
+            title: {
+                text: '<b>Forest Plot: Modelos IRDC10 vs LASSO</b>',
+                font: {
+                    family: 'Inter, sans-serif',
+                    size: 18,
+                    color: '#1e293b' // slate-800
+                }
+            },
+            barmode: 'group',
+            yaxis: {
+                autorange: 'reversed',
+                tickfont: {
+                    family: 'Inter, sans-serif',
+                    size: 10
+                }
+            },
+            xaxis: {
+                title: {
+                    text: 'Coeficiente log-transformado (log₁₀(1+|x|)×sinal)',
+                    font: {
+                        family: 'Inter, sans-serif',
+                        size: 12
+                    }
+                },
+                zerolinecolor: '#cbd5e1', // slate-300
+                zerolinewidth: 1.5,
+            },
+            legend: {
+                orientation: 'h',
+                y: -0.2,
+                x: 0.5,
+                xanchor: 'center'
+            },
+            margin: {
+                l: 200,
+                r: 20,
+                t: 80,
+                b: 100
+            },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: {
+                family: 'Inter, sans-serif',
+                color: '#475569' // slate-600
+            }
+        };
+
+        Plotly.newPlot('coefficientsChart', plotData, layout, {responsive: true, displaylogo: false});
+
+        // --- Accordion ---
+        const accordionButtons = document.querySelectorAll('.accordion-button');
+        accordionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                button.classList.toggle('active');
+
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } 
+            });
+        });
+
+        // --- Nav scroll observer ---
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('header nav a');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        const href = link.getAttribute('href');
+                        if(href && href.length > 1) {
+                           link.classList.toggle('active', href.substring(1) === entry.target.id);
+                        }
+                    });
+                }
+            });
+        }, { rootMargin: "-40% 0px -60% 0px" });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+    });
+    </script>
+</body>
+</html>
