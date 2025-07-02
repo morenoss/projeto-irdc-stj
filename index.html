@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise Preditiva de Risco de Descumprimento Contratual: Um Modelo Contábil de Apoio à Decisão no Setor Público Brasileiro</title>
+    <title>Gestão de Riscos em Contratações Públicas Brasileiras: Um Modelo Contábil-Preditivo Aplicado no Superior Tribunal de Justiça</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
         - Report Info: Model Coefficients (Full Data) -> Goal: Compare -> Viz: Plotly.js Horizontal Bar Chart -> Interaction: Rich hover tooltips, zoom/pan -> Justification: Provides a more professional and interactive visualization, as requested, using a symmetric log scale for readability.
         - Report Info: Live Dashboard (Power BI) -> Goal: Relate/Organize/Explore -> Viz: Embedded iframe -> Interaction: Full Power BI interactivity -> Justification: Provides the complete, real-world tool for exploration.
         - Report Info: Risk Treatment Plan (Fig 9) -> Goal: Inform -> Viz: HTML/CSS Cards -> Justification: Presents actionable guidelines clearly.
-        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List -> Justification: Provides access to source materials.
+        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List -> Justification: Provides access to source materials, including the foundational dissertation and specific article links with correct publication status.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -89,8 +89,8 @@
     <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="Assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
-                <img src="Assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
+                <img src="assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
+                <img src="assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
             </div>
             <div class="hidden md:flex space-x-8">
                 <a href="#overview" class="nav-link active">Visão Geral</a>
@@ -145,7 +145,7 @@
                         </button>
                         <div class="accordion-content">
                             <div class="p-5 border-t border-slate-200 text-slate-600">
-                                <p>"Como aplicar um método contábil preditivo de forma prática na gestão de riscos em contratações públicas?"</p>
+                                <p>"Como aplicar uma metodologia contábil preditiva de forma prática na gestão de riscos em contratações públicas?"</p>
                             </div>
                         </div>
                     </div>
@@ -234,14 +234,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-sm">
                             <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Importação e Transformação</strong><p class="text-xs mt-1">Consolidação dos dados contábeis e cadastrais, análise descritiva e preparação da base.</p></div>
                             <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Winsorização de Variáveis</strong><p class="text-xs mt-1">Corte nos percentis 1% e 99% para mitigar outliers extremos.</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Imputação de Dados Faltantes</strong><p class="text-xs mt-1">Preenchimento por por média (CV ≤ 30%) ou mediana (CV > 30%), para evitar distorção por outliers </p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Imputação de Dados Faltantes</strong><p class="text-xs mt-1">Preenchimento por média ou mediana com base no coeficiente de variação.</p></div>
                             <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-down"><strong>Estatísticas Descritivas</strong><p class="text-xs mt-1">Comparação entre grupos penalizados e não penalizados.</p></div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-sm md:flex md:flex-row-reverse">
                             <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Validação Cruzada (Holdout)</strong><p class="text-xs mt-1">Separação em treino (80%) e teste (20%).</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Modelagem e Avaliação</strong><p class="text-xs mt-1">Estimativa dos modelos logit completo, stepwise (5% e 10%) e LASSO, com validação por métricas preditivas.</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Balanceamento com SMOTENC</strong><p class="text-xs mt-1">Aplicação de técnica de machine learning em Python para equilibrar a amostra de treinamento, devido à predominância de empresas não penalizadas.</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Agrupamento de CNAEs Raros</strong><p class="text-xs mt-1">CNAEs com baixa frequência agrupados para reduzir esparsidade.</p></div>                        </div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Balanceamento com SMOTENC</strong><p class="text-xs mt-1">Aplicação no Python para tratar desbalanceamento.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Agrupamento de CNAEs Raros</strong><p class="text-xs mt-1">CNAEs com baixa frequência agrupados para reduzir esparsidade.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg"><strong>Modelagem e Avaliação</strong><p class="text-xs mt-1">Estimativa dos modelos logit e validação por métricas preditivas.</p></div>
+                        </div>
                     </div>
                 </div>
 
@@ -274,7 +275,7 @@
                     <div>
                         <h3 class="text-2xl font-bold text-slate-700 mb-4">Dimensão de Impacto</h3>
                         <div class="space-y-4 text-slate-600">
-                            <p>A dimensão de impacto mensura a magnitude das consequências de uma eventual falha contratual. A construção foi baseada nos critérios de qualificação econômico-financeira (QEF) do STJ, que são progressivos conforme o vulto financeiro do contrato.</p>
+                            <p>A dimensão de impacto mensura a magnitude das consequências de uma eventual falha contratual, baseando-se nos critérios de qualificação econômico-financeira (QEF) do STJ.</p>
                             <p>A classificação é hierárquica e ocorre em duas etapas. Primeiro, define-se o <strong>status da empresa</strong>: uma empresa é classificada como <strong>"QEF Relevante"</strong> se possuir pelo menos um contrato de alta criticidade (Nível V, Alta Representação Orçamentária, etc.). Caso contrário, seu status é <strong>"QEF Padrão"</strong>. Em seguida, o <strong>valor do contrato</strong> é usado como critério final, especialmente para casos onde a análise contábil é dispensada pela norma.</p>
                              <div class="bg-white p-4 rounded-lg border mt-4">
                                 <table class="w-full text-left text-sm">
@@ -412,28 +413,41 @@
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Apêndice: Materiais Suplementares</h2>
-                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Acesso a documentos e scripts relacionados ao desenvolvimento do artigo.</p>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Acesso à dissertação de mestrado que originou este trabalho e outros materiais de apoio.</p>
                 </div>
                 <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md border border-slate-200">
                     <ul class="space-y-4">
                         <li>
-                            <h4 class="font-semibold text-slate-800">1. Aceitação do artigo original</h4>
-                            <p class="text-sm text-slate-500">E-mail de aceitação do artigo "Informação Contábil e Risco de Descumprimento de Contratos...". <a href="#" class="text-blue-600 hover:underline">[Acesso ao PDF]</a></p>
+                            <h4 class="font-semibold text-slate-800">1. Artigo no Congresso USP</h4>
+                            <p class="text-sm text-slate-500">Primeiro reconhecimento acadêmico do modelo, aprovado no 24º USP International Conference on Accounting. Suas contribuições serviram para evoluir o projeto. <a href="https://congressousp.fipecafi.org/Arquivos/41/Anais/4839%20.pdf" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Acesso ao PDF]</a></p>
                         </li>
                         <li>
-                            <h4 class="font-semibold text-slate-800">2. Versão aceita para publicação</h4>
-                            <p class="text-sm text-slate-500">Versão final do artigo-base aceita para publicação. <a href="#" class="text-blue-600 hover:underline">[Acesso ao PDF]</a></p>
+                            <h4 class="font-semibold text-slate-800">2. Dissertação de Mestrado (Trabalho Original)</h4>
+                            <p class="text-sm text-slate-500">Título: "Inadimplemento contratual no Setor Público Brasileiro : Índice de (des)confiança no fornecedor para gestão de riscos em contratações regidas pela Lei Geral de Licitações". Este trabalho deu origem aos artigos subsequentes. <a href="https://repositorio.unb.br/handle/10482/51797" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Acesso à Dissertação]</a></p>
                         </li>
                         <li>
-                            <h4 class="font-semibold text-slate-800">3. Do-file Stata</h4>
+                            <h4 class="font-semibold text-slate-800">3. Artigo para USP (Refinamento Conceitual)</h4>
+                            <p class="text-sm text-slate-500">
+                                Aceito para publicação (no prelo) na <a href="https://revistas.usp.br/rcf/index" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Accounting & Finance Review (Revista Contabilidade & Finanças - Universidade de São Paulo)</a>. Este artigo refina o desenvolvimento conceitual do IRDC.
+                                <br>
+                                <a href="https://stjjus-my.sharepoint.com/:b:/g/personal/morenos_stj_jus_br/ETbyr39YXSVLpegCIdRIAyoBrYOR3sCNvzAH74jCYbdQuw?e=FmOC95" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[E-mail de Aceitação]</a> | 
+                                <a href="https://stjjus-my.sharepoint.com/:b:/g/personal/morenos_stj_jus_br/EcWsRi-8d5FFj3C8tGM_SWoB-W-IJWSTpJGUj1uGUKpePg?e=8pSP6X" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Versão Aceita para Publicação]</a>
+                            </p>
+                        </li>
+                         <li>
+                            <h4 class="font-semibold text-slate-800">4. Artigo para Bahia (Aplicação Prática)</h4>
+                            <p class="text-sm text-slate-500">Versão em produção para a <a href="https://periodicos.ufba.br/index.php/rcontabilidade/index" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Revista de Contabilidade da UFBA (Universidade Federal da Bahia)</a>, focada no refinamento da aplicação prática do IRDC. <a href="https://stjjus-my.sharepoint.com/:b:/g/personal/morenos_stj_jus_br/EYDNI9zc52pBuRQD7cYYKwUBmNNnJjgpkbGc8B__oiACwA?e=x01eNz" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Acesso à versão atual]</a></p>
+                        </li>
+                        <li>
+                            <h4 class="font-semibold text-slate-800">5. Do-file Stata</h4>
                             <p class="text-sm text-slate-500">Script com os testes estatísticos utilizados no modelo. <a href="#" class="text-blue-600 hover:underline">[Acesso ao .do]</a></p>
                         </li>
                         <li>
-                            <h4 class="font-semibold text-slate-800">4. Log com resultados estatísticos</h4>
+                            <h4 class="font-semibold text-slate-800">6. Log com resultados estatísticos</h4>
                             <p class="text-sm text-slate-500">Log completo com os resultados gerados pelo script Stata. <a href="#" class="text-blue-600 hover:underline">[Acesso ao .log]</a></p>
                         </li>
                         <li>
-                            <h4 class="font-semibold text-slate-800">5. Link para o Painel de BI</h4>
+                            <h4 class="font-semibold text-slate-800">7. Link para o Painel de BI</h4>
                             <p class="text-sm text-slate-500">Acesso direto ao Painel de Informações Contábeis das Contratações do STJ. <a href="https://app.powerbi.com/view?r=eyJrIjoiM2I4ZDE0MmEtZjg3OS00ZTA4LWI5OTUtMjZjNTczODY0OGZiIiwidCI6ImRlMjNkNWYwLWNjYWMtNGM4NC04MWQ2LTI4OTJhOGMwNTVhYSJ9" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Abrir em nova aba]</a></p>
                         </li>
                     </ul>
