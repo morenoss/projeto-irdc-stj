@@ -89,8 +89,8 @@
     <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
-                <img src="assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
+                <img src="Assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
+                <img src="Assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
             </div>
             <div class="hidden md:flex space-x-8">
                 <a href="#overview" class="nav-link active">Visão Geral</a>
@@ -239,10 +239,9 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-sm md:flex md:flex-row-reverse">
                             <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Validação Cruzada (Holdout)</strong><p class="text-xs mt-1">Separação em treino (80%) e teste (20%).</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Balanceamento com SMOTENC</strong><p class="text-xs mt-1">Aplicação no Python para tratar desbalanceamento.</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Agrupamento de CNAEs Raros</strong><p class="text-xs mt-1">CNAEs com baixa frequência agrupados para reduzir esparsidade.</p></div>
-                            <div class="bg-slate-100 p-4 rounded-lg"><strong>Modelagem e Avaliação</strong><p class="text-xs mt-1">Estimativa dos modelos logit e validação por métricas preditivas.</p></div>
-                        </div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Modelagem e Avaliação</strong><p class="text-xs mt-1">Estimativa dos modelos logit completo, stepwise (5% e 10%) e LASSO, com validação por métricas preditivas.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Balanceamento com SMOTENC</strong><p class="text-xs mt-1">Aplicação de técnica de machine learning em Python para equilibrar a amostra de treinamento, devido à predominância de empresas não penalizadas.</p></div>
+                            <div class="bg-slate-100 p-4 rounded-lg relative md:method-arrow-right"><strong>Agrupamento de CNAEs Raros</strong><p class="text-xs mt-1">CNAEs com baixa frequência agrupados para reduzir esparsidade.</p></div>                        </div>
                     </div>
                 </div>
 
@@ -250,10 +249,10 @@
                     <div>
                         <h3 class="text-2xl font-bold text-slate-700 mb-4">Dimensão de Probabilidade</h3>
                         <div class="space-y-4 text-slate-600">
-                            <p>Para estimar a probabilidade de falhas na execução contratual, comparamos dois modelos de regressão logística. O primeiro (IRDC10) usou a seleção de variáveis *stepwise*, enquanto o segundo empregou a técnica *LASSO*, que previne sobreajuste e melhora a interpretabilidade.</p>
-                            <p>A robustez foi garantida com técnicas de tratamento como <strong>winsorização</strong> (para mitigar outliers), <strong>validação holdout</strong> (80/20) e <strong>SMOTENC</strong> (para balancear a amostra de treino).</p>
+                            <p>Para estimar a probabilidade de um fornecedor ser penalizado por falhas na execução contratual, comparamos dois modelos de regressão logística: o IRDC10 (com seleção *stepwise*) e um modelo com regularização *LASSO*, que previne sobreajuste.</p>
+                            <p>A robustez foi garantida com técnicas como <strong>winsorização</strong>, <strong>validação holdout</strong> (80/20) e <strong>SMOTENC</strong> para balancear a amostra de treino. O <strong>ponto de corte ideal</strong>, que é o limiar de probabilidade onde a capacidade de identificar corretamente os penalizados (sensibilidade) e os não penalizados (especificidade) se equilibra, foi estimado em <strong>45%</strong>.</p>
                             <h4 class="font-semibold text-slate-700 pt-4">Operacionalização e Ensemble</h4>
-                            <p>Os dois modelos (Stepwise e LASSO) foram implementados no Power BI. Adotamos uma abordagem de <strong>ensemble (comitê)</strong>, onde a classificação final de risco depende do consenso entre os modelos, aumentando a confiabilidade.</p>
+                            <p>Os dois modelos foram implementados no Power BI. Adotamos uma abordagem de <strong>ensemble (comitê)</strong>, onde a classificação final de risco depende do consenso entre os modelos, aumentando a confiabilidade da análise.</p>
                             <div class="bg-white p-4 rounded-lg border mt-4">
                                 <table class="w-full text-left text-sm">
                                     <caption class="text-sm font-semibold text-slate-700 mb-2">Tabela 1: Matriz de Classificação da Probabilidade</caption>
@@ -275,8 +274,8 @@
                     <div>
                         <h3 class="text-2xl font-bold text-slate-700 mb-4">Dimensão de Impacto</h3>
                         <div class="space-y-4 text-slate-600">
-                            <p>A dimensão de impacto mede as consequências de uma eventual falha na execução contratual, baseando-se nos critérios de qualificação econômico-financeira (QEF) do STJ.</p>
-                            <p>A classificação é hierárquica: primeiro, avalia-se a <strong>criticidade do contrato</strong> (status "QEF Relevante" ou "QEF Padrão"). Em seguida, o <strong>valor do contrato</strong> é usado como critério decisivo, especialmente para casos onde a análise contábil é dispensada.</p>
+                            <p>A dimensão de impacto mensura a magnitude das consequências de uma eventual falha contratual. A construção foi baseada nos critérios de qualificação econômico-financeira (QEF) do STJ, que são progressivos conforme o vulto financeiro do contrato.</p>
+                            <p>A classificação é hierárquica e ocorre em duas etapas. Primeiro, define-se o <strong>status da empresa</strong>: uma empresa é classificada como <strong>"QEF Relevante"</strong> se possuir pelo menos um contrato de alta criticidade (Nível V, Alta Representação Orçamentária, etc.). Caso contrário, seu status é <strong>"QEF Padrão"</strong>. Em seguida, o <strong>valor do contrato</strong> é usado como critério final, especialmente para casos onde a análise contábil é dispensada pela norma.</p>
                              <div class="bg-white p-4 rounded-lg border mt-4">
                                 <table class="w-full text-left text-sm">
                                      <caption class="text-sm font-semibold text-slate-700 mb-2">Tabela 2: Matriz de Classificação do Impacto</caption>
