@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css">
     <!-- Chosen Palette: Warm Neutrals with Strategic Accents -->
     <!-- Application Structure Plan: A single-page, section-based dashboard. The structure guides the user from the high-level problem and solution (Overview, Research Project), to deep-dive interactive explorations (Predictive Analysis with Plotly, Management Tool with embedded Power BI) and supplementary materials (Appendix). This non-linear, thematic structure was chosen over the report's linear format to empower users to directly access the information most relevant to them, enhancing usability and engagement. Key interactions include the accordion, Plotly chart hovers/zoom, and exploring the live Power BI dashboard. -->
     <!-- Visualization & Content Choices: 
@@ -17,7 +18,7 @@
         - Report Info: Model Coefficients (Full Data) -> Goal: Compare -> Viz: Plotly.js Horizontal Bar Chart -> Interaction: Rich hover tooltips, zoom/pan -> Justification: Provides a more professional and interactive visualization, as requested, using a symmetric log scale for readability.
         - Report Info: Live Dashboard (Power BI) -> Goal: Relate/Organize/Explore -> Viz: Embedded iframe -> Interaction: Full Power BI interactivity -> Justification: Provides the complete, real-world tool for exploration.
         - Report Info: Risk Treatment Plan (Fig 9) -> Goal: Inform -> Viz: HTML/CSS Cards -> Justification: Presents actionable guidelines clearly.
-        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List -> Justification: Provides access to source materials, including the foundational dissertation and specific article links with correct publication status.
+        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List with embedded, collapsible code blocks with syntax highlighting and Gemini-powered explanations, dynamically fetched from GitHub -> Justification: Provides direct, live access to scripts for maximum transparency and reproducibility.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -82,6 +83,23 @@
             font-size: 1.5rem;
             color: #94a3b8; /* slate-400 */
         }
+        pre[class*="language-"] {
+            border-radius: 0 0 0.5rem 0.5rem;
+            margin-top: 0;
+            max-height: 40rem; /* Increased height */
+        }
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border-left-color: #fff;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="text-slate-700">
@@ -89,10 +107,10 @@
     <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="Assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
-                <img src="Assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
+                <img src="assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
+                <img src="assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
             </div>
-            <div class="hidden md:flex space-x-8">
+            <div class="hidden md:flex space-x-8 text-sm">
                 <a href="#overview" class="nav-link active">Visão Geral</a>
                 <a href="#research-project" class="nav-link">Projeto</a>
                 <a href="#methodology" class="nav-link">Metodologia</a>
@@ -100,6 +118,7 @@
                 <a href="#tool" class="nav-link">Painel BI</a>
                 <a href="#plan" class="nav-link">Plano de Ação</a>
                 <a href="#appendix" class="nav-link">Apêndice</a>
+                <a href="#contact" class="nav-link">Contato</a>
             </div>
         </nav>
     </header>
@@ -188,7 +207,7 @@
                             <div class="p-5 border-t border-slate-200 text-slate-600 space-y-4">
                                 <div>
                                     <h4 class="font-semibold text-slate-700">Gap Identificado:</h4>
-                                    <p class="mt-1">Poucos estudos orientam a adoção prática de modelos contábeis preditivos para gestão de risco contratual no setor público brasileiro, especialmente com a integração de ferramentas de BI.</p>
+                                    <p class="mt-1">Apesar da evolução na agenda teórica sobre modelos preditivos, a literatura aponta uma lacuna em estudos técnico-tecnológicos que orientem a adoção concreta de modelos contábeis na gestão de riscos do setor público. Autores como Barth (2015) e Cornacchione (2025) destacam que a relevância da pesquisa moderna vai além do rigor científico, exigindo a capacidade de oferecer soluções práticas para problemas reais da administração. Nosso trabalho se insere exatamente neste gap, propondo não apenas um modelo, mas um framework tecnológico completo e aplicável.</p>
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-slate-700">Diferenciais vs. Artigo Predecessor (Santiago et al.):</h4>
@@ -413,9 +432,9 @@
             <div class="container mx-auto px-6">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl md:text-4xl font-bold text-slate-800">Apêndice: Materiais Suplementares</h2>
-                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Acesso à dissertação de mestrado que originou este trabalho e outros materiais de apoio.</p>
+                    <p class="mt-3 text-lg text-slate-600 max-w-3xl mx-auto">Acesso à trajetória da pesquisa, desde os artigos seminais até os scripts e materiais de apoio que garantem a transparência e reprodutibilidade do estudo.</p>
                 </div>
-                <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md border border-slate-200">
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md border border-slate-200">
                     <ul class="space-y-4">
                         <li>
                             <h4 class="font-semibold text-slate-800">1. Artigo no Congresso USP</h4>
@@ -437,20 +456,69 @@
                          <li>
                             <h4 class="font-semibold text-slate-800">4. Artigo para Bahia (Aplicação Prática)</h4>
                             <p class="text-sm text-slate-500">Versão em produção para a <a href="https://periodicos.ufba.br/index.php/rcontabilidade/index" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Revista de Contabilidade da UFBA (Universidade Federal da Bahia)</a>, focada no refinamento da aplicação prática do IRDC. <a href="https://stjjus-my.sharepoint.com/:b:/g/personal/morenos_stj_jus_br/EYDNI9zc52pBuRQD7cYYKwUBmNNnJjgpkbGc8B__oiACwA?e=x01eNz" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Acesso à versão atual]</a></p>
+                            <div class="mt-4 space-y-2">
+                                <div class="bg-white border border-slate-200 rounded-lg">
+                                    <button class="accordion-button flex justify-between items-center w-full p-3 font-semibold text-left text-slate-700 text-sm">
+                                        <span>4.1 Do-file Stata (Script de Análise)</span>
+                                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="accordion-content">
+                                        <div class="border-t border-slate-200">
+                                            <p class="p-3 text-xs text-slate-500">O Do-file é o roteiro da análise estatística. Sua disponibilização facilita a <strong>transparência e a reprodutibilidade científica</strong>, permitindo que outros pesquisadores verifiquem o processo.</p>
+                                            <div class="relative">
+                                                <div class="bg-slate-800 text-white text-sm font-mono p-2 flex justify-between items-center rounded-t-md">
+                                                    <span>IRDC_Winsor_TreinoTeste_SMOTENC_logit.do</span>
+                                                    <button class="copy-code-btn bg-slate-600 hover:bg-slate-500 text-xs px-2 py-1 rounded">Copiar</button>
+                                                </div>
+                                                <pre class="max-h-96 overflow-y-auto !rounded-t-none"><code id="code-do" class="language-sql">Carregando script do GitHub...</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-slate-200 rounded-lg">
+                                     <button class="accordion-button flex justify-between items-center w-full p-3 font-semibold text-left text-slate-700 text-sm">
+                                        <span>4.2 Log com Resultados Estatísticos</span>
+                                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                     <div class="accordion-content">
+                                        <div class="border-t border-slate-200">
+                                            <p class="p-3 text-xs text-slate-500">O arquivo de Log é a prova de que a análise foi executada como descrita. Ele registra os comandos e resultados, garantindo a análise detalhada das estatísticas dos modelos e dos tratamentos aplicados.</p>
+                                             <div class="relative">
+                                                <div class="bg-slate-800 text-white text-sm font-mono p-2 flex justify-between items-center rounded-t-md">
+                                                    <span>IRDC_UFBAAPCONT.log</span>
+                                                    <button class="copy-code-btn bg-slate-600 hover:bg-slate-500 text-xs px-2 py-1 rounded">Copiar</button>
+                                                </div>
+                                                <pre class="max-h-96 overflow-y-auto !rounded-t-none"><code id="code-log" class="language-bash">Carregando log do GitHub...</code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </li>
                         <li>
-                            <h4 class="font-semibold text-slate-800">5. Do-file Stata</h4>
-                            <p class="text-sm text-slate-500">Script com os testes estatísticos utilizados no modelo. <a href="#" class="text-blue-600 hover:underline">[Acesso ao .do]</a></p>
-                        </li>
-                        <li>
-                            <h4 class="font-semibold text-slate-800">6. Log com resultados estatísticos</h4>
-                            <p class="text-sm text-slate-500">Log completo com os resultados gerados pelo script Stata. <a href="#" class="text-blue-600 hover:underline">[Acesso ao .log]</a></p>
-                        </li>
-                        <li>
-                            <h4 class="font-semibold text-slate-800">7. Link para o Painel de BI</h4>
-                            <p class="text-sm text-slate-500">Acesso direto ao Painel de Informações Contábeis das Contratações do STJ. <a href="https://app.powerbi.com/view?r=eyJrIjoiM2I4ZDE0MmEtZjg3OS00ZTA4LWI5OTUtMjZjNTczODY0OGZiIiwidCI6ImRlMjNkNWYwLWNjYWMtNGM4NC04MWQ2LTI4OTJhOGMwNTVhYSJ9" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Abrir em nova aba]</a></p>
+                            <h4 class="font-semibold text-slate-800">5. Repositório do Projeto no GitHub</h4>
+                            <p class="text-sm text-slate-500">Acesso completo a todos os arquivos, scripts e documentos do projeto. <a href="https://github.com/morenoss/projeto-irdc-stj" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">[Acessar Repositório]</a></p>
                         </li>
                     </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-16 md:py-24 bg-slate-50">
+            <div class="container mx-auto px-6">
+                <div class="max-w-2xl mx-auto text-center">
+                     <h2 class="text-3xl font-bold text-slate-800">Sobre o Autor</h2>
+                     <div class="mt-8 bg-white p-8 rounded-lg shadow-md border border-slate-200">
+                        <h3 class="text-2xl font-bold text-slate-800">Moreno Souto Santiago</h3>
+                        <p class="mt-4 text-slate-600">Analista do STJ, Contador e Mestre em Governança e Inovação em Políticas Públicas pela UnB.</p>
+                        <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4 text-sm">
+                             <a href="mailto:morenos@stj.jus.br" class="text-blue-600 hover:underline">morenos@stj.jus.br</a>
+                             <span class="hidden sm:inline text-slate-400">|</span>
+                             <a href="mailto:moreno.souto@gmail.com" class="text-blue-600 hover:underline">moreno.souto@gmail.com</a>
+                             <span class="hidden sm:inline text-slate-400">|</span>
+                             <a href="http://buscatextual.cnpq.br/buscatextual/visualizacv.do?id=K4210377P6" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">Currículo Lattes</a>
+                        </div>
+                     </div>
                 </div>
             </div>
         </section>
@@ -473,6 +541,8 @@
         </div>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
 
@@ -610,6 +680,51 @@
                 } 
             });
         });
+
+        // --- Copy Code ---
+        const copyButtons = document.querySelectorAll('.copy-code-btn');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const codeElement = e.target.closest('.relative').querySelector('code');
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = codeElement.innerText;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                
+                const originalText = button.innerText;
+                button.innerText = 'Copiado!';
+                setTimeout(() => {
+                    button.innerText = originalText;
+                }, 2000);
+            });
+        });
+        
+        async function fetchAndDisplayCode(url, codeElementId, language) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                const codeElement = document.getElementById(codeElementId);
+                codeElement.textContent = text;
+                codeElement.className = `language-${language}`;
+                Prism.highlightAll();
+            } catch (error) {
+                const codeElement = document.getElementById(codeElementId);
+                codeElement.textContent = `Erro ao carregar o script de ${url}. Por favor, verifique o link ou tente novamente mais tarde.`;
+                console.error("Erro ao buscar o código:", error);
+            }
+        }
+
+        const doFileUrl = 'https://raw.githubusercontent.com/morenoss/projeto-irdc-stj/main/Scripts/IRDC_Winsor_TreinoTeste_SMOTENC_logit.do';
+        const logFileUrl = 'https://raw.githubusercontent.com/morenoss/projeto-irdc-stj/main/Scripts/IRDC_UFBAAPCONT.log';
+
+        fetchAndDisplayCode(doFileUrl, 'code-do', 'sql');
+        fetchAndDisplayCode(logFileUrl, 'code-log', 'bash');
+
 
         // --- Nav scroll observer ---
         const sections = document.querySelectorAll('section');
