@@ -18,7 +18,7 @@
         - Report Info: Model Coefficients (Full Data) -> Goal: Compare -> Viz: Plotly.js Horizontal Bar Chart -> Interaction: Rich hover tooltips, zoom/pan -> Justification: Provides a more professional and interactive visualization, as requested, using a symmetric log scale for readability.
         - Report Info: Live Dashboard (Power BI) -> Goal: Relate/Organize/Explore -> Viz: Embedded iframe -> Interaction: Full Power BI interactivity -> Justification: Provides the complete, real-world tool for exploration.
         - Report Info: Risk Treatment Plan (Fig 9) -> Goal: Inform -> Viz: HTML/CSS Cards -> Justification: Presents actionable guidelines clearly.
-        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List with embedded, collapsible code blocks with syntax highlighting and Gemini-powered explanations, dynamically fetched from GitHub -> Justification: Provides direct, live access to scripts for maximum transparency and reproducibility.
+        - Report Info: Appendix Links -> Goal: Inform/Supplement -> Viz: HTML List with embedded, collapsible code blocks with syntax highlighting, dynamically fetched from GitHub -> Justification: Provides direct, live access to scripts for maximum transparency and reproducibility.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -107,8 +107,8 @@
     <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="Assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
-                <img src="Assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
+                <img src="assets/logo_stj.png" alt="Logomarca do Superior Tribunal de Justiça" class="h-8 w-auto">
+                <img src="assets/logo_ppgcont2.png" alt="Logomarca do PPGCont UnB" class="h-8 w-auto">
             </div>
             <div class="hidden md:flex space-x-8 text-sm">
                 <a href="#overview" class="nav-link active">Visão Geral</a>
@@ -175,32 +175,20 @@
                         </button>
                         <div class="accordion-content">
                             <div class="p-5 border-t border-slate-200 text-slate-600">
-                                <ul class="list-disc space-y-2 pl-5">
+                                <ul class="list-disc space-y-3 pl-5">
                                     <li>Governança e inovação pública exigem decisões baseadas em dados e evidências (Mulgan & Albury, 2003; OCDE, 2018).</li>
-                                    <li>A contabilidade pode e deve ser usada como instrumento para aprimorar a gestão de riscos e promover transparência, indo além do uso apenas “cerimonial” de dados (Azevedo & Ribeiro, 2020; Rikhardsson & Yigitbasioglu, 2018).</li>
-                                    <li>Fundamentos de análise de risco, Teoria dos Custos de Transação e modelos preditivos sustentam a proposta (COSO, 2018; Williamson, 1996).</li>
+                                    <li>A contabilidade nas contratações públicas brasileiras pode e deve ser usada como instrumento para aprimorar a gestão de riscos e promover transparência, indo além do uso apenas “cerimonial” de dados nas licitações.</li>
+                                    <li>Fundamentos de análise de risco e custos de transação sustentam a proposta (COSO, 2018; Williamson, 1996).</li>
+                                    <li>
+                                        <p><strong>Modelos Preditivos na Prática:</strong> Ferramentas como modelos preditivos têm se mostrado essenciais para fortalecer a gestão de riscos contratuais. A aplicação dessas técnicas é ampla, abrangendo desde a previsão de corrupção via machine learning (Colonnelli et al., 2022) até a estimativa de contingências em projetos públicos (Lam & Siwingw, 2017). No cenário brasileiro, destacam-se trabalhos que adaptaram credit scoring (Sales, 2013), classificaram fornecedores com base em riscos e custos de transação (E. R. Faria et al., 2013; Miranda et al., 2022) e aplicaram machine learning para prever o risco de descumprimento (Henrique et al., 2020). Esses estudos reforçam a relevância de variáveis contábeis e históricas, apesar dos desafios de acesso a dados apontados por Menezes et al. (2023).</p>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                     <div class="bg-white border border-slate-200 rounded-lg">
                         <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
-                            <span>3. Importância e Justificativa</span>
-                            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </button>
-                        <div class="accordion-content">
-                            <div class="p-5 border-t border-slate-200 text-slate-600">
-                                <ul class="list-disc space-y-2 pl-5">
-                                    <li>Atende à necessidade prática de inovação no setor público, em linha com os ODS (9 e 16).</li>
-                                    <li>Supre a ausência de integração sistemática de informações contábeis à gestão de riscos em contratações públicas.</li>
-                                    <li>Reforça a governança e eficiência no uso de recursos públicos, permitindo alocação racional de esforços de fiscalização e monitoramento.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white border border-slate-200 rounded-lg">
-                        <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
-                            <span>4. Gap de Literatura e Diferenciais</span>
+                            <span>3. Gap de Literatura e Diferenciais</span>
                             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div class="accordion-content">
@@ -222,17 +210,14 @@
                     </div>
                      <div class="bg-white border border-slate-200 rounded-lg">
                         <button class="accordion-button flex justify-between items-center w-full p-5 font-semibold text-left text-slate-800">
-                            <span>5. Como a Questão Será Respondida</span>
+                            <span>4. Como a Questão Será Respondida</span>
                             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div class="accordion-content">
-                            <div class="p-5 border-t border-slate-200 text-slate-600">
-                                 <ul class="list-disc space-y-2 pl-5">
-                                    <li>Através de um estudo de caso prático no STJ, com dados de fornecedores de 2018-2023.</li>
-                                    <li>Construção, validação e comparação de modelos logísticos (stepwise e LASSO) para prever falhas na execução contratual.</li>
-                                    <li>Desenvolvimento de um painel de BI e uma matriz Probabilidade x Impacto como ferramenta de decisão.</li>
-                                    <li>Aprofundamento do IRDC de Santiago et al. (2025, no prelo), consolidando-o em uma matriz de risco inspirada no framework do STJ.</li>
-                                </ul>
+                            <div class="p-5 border-t border-slate-200 text-slate-600 space-y-3">
+                                <p>A proposta aprofunda a utilização do Índice de Risco de Descumprimento Contratual (IRDC) proposto por Santiago et al. (2025, no prelo), consolidado em uma matriz de risco do tipo Probabilidade × Impacto (PIm), inspirado no framework institucional adotado pelo órgão (Superior Tribunal de Justiça, 2022).</p>
+                                <p>A matriz PIm, ao integrar a probabilidade estimada pelo modelo contábil com o impacto financeiro dos contratos, permite a identificação, o monitoramento e a priorização dos riscos mais relevantes de fornecedores. Isso é potencializado por recursos de <strong>analytics</strong> e ferramentas de <strong>Business Intelligence (BI)</strong>, que traduzem grandes volumes de dados em visualizações interativas para qualificar o processo decisório na gestão pública (Božič & Dimovski, 2019; Dilla et al., 2010; Rikhardsson & Yigitbasioglu, 2018).</p>
+                                <p>Essa abordagem transforma a matriz PIm em uma ferramenta qualitativa de apoio à decisão, que contribui para a alocação eficiente de recursos e para o fortalecimento da governança pública (COSO & WBCSD, 2018; Dantas et al., 2010), integrando percepção visual, contexto e design informacional (Davison, 2015; F. T. de Faria & Ferreira, 2024).</p>
                             </div>
                         </div>
                     </div>
