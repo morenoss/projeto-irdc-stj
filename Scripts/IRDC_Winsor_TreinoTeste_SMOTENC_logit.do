@@ -2,8 +2,12 @@
 PREPARAÇÃO - MACROS-CAMINHOS E INÍCIO DO LOG DE GRAVAÇÃO DOS RESULTADOS
 *******************************************************************************/
 * Definindo os diretórios de trabalho
-local basedados     "INSERIR AQUI O CAMINHO"
-local resultados	"INSERIR AQUI O CAMINHO DO LOG DE RESULTADOS"
+local basedados     "INFORME AQUI O LOCAL ONDE O SCRIPT ESTÁ SALVO. SERÁ A RAIZ ONDE TUDO SERÁ SALVO"
+local resultados    "`basedados'/Resultados"
+local pacotes       "`basedados'/Pacotes" **SALVE AQUI O PACOTE DE ANÁLISE DE CORRELAÇÃO**
+
+*Instala e ativa pacotes locais para heatmap
+adopath + "`pacotes'"
 
 * Fechar qualquer log aberto
 capture log close
@@ -31,44 +35,58 @@ dos fornecedores do STJ. As etapas incluem:
 1. **Importação e transformação dos dados**: consolidação dos indicadores contábeis,
    análise descritiva inicial e preparação da base para modelagem.
 
-2. **Winsorização das variáveis contínuas**: aplicação do corte nos percentis 1% e 99%
+2. **Matriz de correlação inicial das variáveis contínuas**: cálculo da matriz de
+   correlação antes da imputação e criação dos índices sintéticos, permitindo acompanhar
+   a evolução das relações entre variáveis conforme os dados são atualizados ou transformados.
+
+3. **Winsorização das variáveis contínuas**: aplicação do corte nos percentis 1% e 99%
    para reduzir o impacto de outliers extremos, preservando a variabilidade e robustez
    das análises subsequentes.
 
-3. **Imputação de valores faltantes**: preenchimento de dados ausentes por média ou mediana,
+4. **Imputação de valores faltantes**: preenchimento de dados ausentes por média ou mediana,
    conforme o coeficiente de variação, para garantir integridade e qualidade da base.
 
-4. **Estatísticas descritivas por grupo**: geração de tabelas de estatísticas descritivas
+5. **Criação dos índices sintéticos (Z-score)**: combinação de variáveis colineares em índices
+   sintéticos para reduzir dimensionalidade e multicolinearidade, facilitando a modelagem.
+
+6. **Matriz de correlação final dos índices sintéticos e variáveis contínuas**:
+   cálculo da matriz após a imputação e criação dos índices para validar a estrutura dos dados.
+
+7. **Estatísticas descritivas por grupo**: geração de tabelas de estatísticas descritivas
    (média, desvio padrão, mínimo, máximo) para empresas penalizadas e não penalizadas,
    antes e após a winsorização, facilitando análise comparativa de perfil.
-   
-5. **Separação das amostras em treinamento (80%) e teste (20%)**: a separação das
+
+8. **Separação das amostras em treinamento (80%) e teste (20%)**: a separação das
    amostras é realizada obedecendo a proporção exata de empresas penalizadas e não penalizadas.
 
-6. **Balanceamento da amostra de treinamento**: aplicação da técnica SMOTENC em Python para lidar com
+9. **Balanceamento da amostra de treinamento**: aplicação da técnica SMOTENC em Python para lidar com
    desbalanceamento da variável dependente (penalização pelo STJ), com codificação de
    variáveis categóricas e posterior reintegração ao Stata.
 
-7. **Agrupamento de CNAEs raros**: definição do mínimo de ocorrências para manter CNAE
-   como categoria isolada (local freq_minima = 10). As categorias com menor frequência
-   foram agrupadas sob o código -1 para reduzir a sparsidade da matriz de variáveis dummies
-   e aumentar a estabilidade dos coeficientes.
- 
-8. **Modelagem e avaliação preditiva**:
-   - Modelo logit completo (com todas as variáveis)
-   - Modelos logit com seleção stepwise (a 5% e 10%)
-   - Modelo com penalização LASSO
-   Cada modelo é avaliado com métricas como acurácia, Kappa, NIR, teste de McNemar,
-   curvas ROC e definição do ponto de corte ideal baseado na equivalência entre
-   sensibilidade e especificidade. As métricas são aplicadas nos conjuntos de treinamento e teste.
+10. **Agrupamento de CNAEs raros**: definição do mínimo de ocorrências para manter CNAE
+    como categoria isolada (local freq_minima = 10). As categorias com menor frequência
+    foram agrupadas sob o código -1 para reduzir a sparsidade da matriz de variáveis dummies
+    e aumentar a estabilidade dos coeficientes.
+
+11. **Conversão e criação de variáveis dummies para variáveis categóricas**:
+    transformação de variáveis categóricas em variáveis dummy após o balanceamento.
+
+12. **Modelagem e avaliação preditiva**:
+    - Modelo logit completo (com todas as variáveis)
+    - Modelos logit com seleção stepwise
+    - Modelo com penalização LASSO
+    Cada modelo é avaliado com métricas como acurácia, Kappa, NIR, teste de McNemar,
+    curvas ROC e definição do ponto de corte ideal baseado na equivalência entre
+    sensibilidade e especificidade. As métricas são aplicadas nos conjuntos de treinamento e teste.
 
 Objetivo:
 Identificar o melhor modelo para predição da variável binária `FoiPenalizadoSTJ`,
 avaliando o poder explicativo de indicadores contábeis, porte, natureza jurídica, CNAE,
 e variáveis de histórico contratual da empresa.
 
-Última atualização: 12/06/2025
+Última atualização: 15/07/2025
 *******************************************************************************/
+
    
 
 /*******************************************************************************
@@ -76,7 +94,7 @@ ETAPA 1 - IMPORTAÇÃO, ANÁLISE DESCRITIVA DAS VARIÁVEIS E TRANSFORMAÇÃO
 *******************************************************************************/
 * Definindo o diretório de trabalho e importando os dados do Excel
 cd "`basedados'"
-import excel "Dados_novo.xlsx", sheet("Tabela 4") firstrow clear
+import excel "Dados_novo", sheet("Tabela 4") firstrow clear
 
 /*******************************************************************************
 1.1 - Executar estatísticas descritivas para todas as variáveis
@@ -110,6 +128,29 @@ tabulate Porte FoiPenalizadoSTJ, column
 tabulate NaturezaJuridica FoiPenalizadoSTJ, row
 tabulate CNAE FoiPenalizadoSTJ, cell
 
+/*******************************************************************************
+1.1.2 Matriz de Correlação das Variáveis Contínuas (STATA + Heatmap)
+*******************************************************************************/
+
+* 1. Defina as variáveis contínuas 
+local var_continuas LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE vlrcontrato QtdeCNAEsSecundarios IdadedeAnos QtePenalOutrosOrgaos
+
+* 2. Calcule a matriz de correlação em Stata
+correlate `var_continuas', means
+matrix C = r(C)
+
+* 3. Gere o heatmap com o pacote heatplot
+
+heatplot C, ///
+    color(RdBu) ///
+    legend(on) aspectratio(1) ///
+    xlabel(, labsize(vsmall) angle(45)) ///
+    ylabel(, labsize(vsmall)) ///
+    title("Matriz de Correlação das Variáveis Contínuas")
+
+* 4. Salve o gráfico
+graph export "heatmap_correlacao.png", replace width(2400)
+
 
 */*******************************************************************************
 1.2 – Winsorização das variáveis contínuas (antes da imputação)
@@ -135,11 +176,11 @@ tabstat LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin
     statistics(mean sd min max n) by(FoiPenalizadoSTJ)
 
 /*******************************************************************************
-1.4 - Transformação de variáveis 
+ETAPA 2 - TRANSFORMAÇÃO DE VARIÁVEIS 
 *******************************************************************************/
 * NÃO gerar dummies ainda — manter Porte, CNAE e NaturezaJuridica para o SMOTENC
 
-* Ajuste apenas valores de variáveis contínuas
+* Ajuste log do valor dos contratos
 replace vlrcontrato = 1 if vlrcontrato == 0 | vlrcontrato == .
 gen log_vlrcontrato = log(vlrcontrato)
 
@@ -148,7 +189,7 @@ drop CNPJ
 
 
 /*******************************************************************************
-ETAPA 2 - IMPUTAÇÃO DOS VALORES FALTANTES (MISSING) COM MÉDIA OU MEDIANA
+2.1 - Imputação dos valores faltantes (missing) com a média ou mediana 
 *******************************************************************************/
 
 * Lista de variáveis com dados faltantes para imputação
@@ -190,6 +231,48 @@ di " Variáveis imputadas com MÉDIA:   `conta_media'"
 di " Variáveis imputadas com MEDIANA: `conta_mediana'"
 di as text " Total de variáveis imputadas:    " `=`conta_media' + `conta_mediana''
 di as text "═══════════════════════════════════════════════════════════════"
+
+/*******************************************************************************
+2.2 - Criação dos Índices Sintéticos (Z-SCORE)
+*******************************************************************************/
+
+/* (A) Liquidez: combina LiqCorrente, LiqGeral, SolvGeral e IndepFin */
+foreach var in LiqCorrente LiqGeral SolvGeral IndepFin {
+    egen z_`var' = std(`var')
+}
+gen Liquidez_Media_Z = (z_LiqCorrente + z_LiqGeral + z_SolvGeral + z_IndepFin)/4
+
+/* (B) Estrutura: combina ImobilPL, PtpCapTerce e EndGeral */
+foreach var in ImobilPL PtpCapTerce EndGeral {
+    egen z_`var' = std(`var')
+}
+gen Estrutura_Media_Z = (z_ImobilPL + z_PtpCapTerce + EndGeral)/2
+
+/* (C) Margem: combina MargOp e MargLiq */
+egen z_MargOp = std(MargOp)
+egen z_MargLiq = std(MargLiq)
+gen Margem_Media_Z = (z_MargOp + z_MargLiq)/2
+
+/*******************************************************************************
+2.2.1 - Matriz de correção dos índices sintéticos (e outras variáveis contínuas) 
+*******************************************************************************/
+
+/* Defina as variáveis contínuas finais para correlação */
+local correl_final Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid GiroAtivo log_vlrcontrato QtdeCNAEsSecundarios QtePenalOutrosOrgaos
+
+/* Calcule a matriz de correlação */
+correlate `correl_final', means
+matrix C = r(C)
+
+/* Gere o heatmap (se tiver heatplot instalado) */
+heatplot C, ///
+    color(RdBu) ///
+    legend(on) aspectratio(1) ///
+    xlabel(, labsize(vsmall) angle(45)) ///
+    ylabel(, labsize(vsmall)) ///
+    title("Matriz de Correlação dos Indicadores Sintéticos e Contínuos")
+
+graph export "heatmap_correlacao_indices.png", replace width(2400)
 
 
 /*******************************************************************************
@@ -578,11 +661,11 @@ unab CNAE_vars : CNAE_*
 unab Natureza_vars : NaturezaJuridica_*
 
 * Definir variáveis contábeis e de controle corretamente
-local var_contabeis `Porte_vars' LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE
+*ANTES DA COMBINAÇÃO DE VARIÁVEISlocal var_contabeis `Porte_vars' LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE
+local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid ImobRecNC GiroAtivo
 
 local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
 
-*local var_controle log_vlrcontrato `Natureza_vars' qtdecnaess~s idadedeanos qtepenalou~s
 
 * Executar a regressão logística
 logit FoiPenalizadoSTJ `var_contabeis' `var_controle' if train == 1
@@ -610,297 +693,7 @@ Essas variáveis de controle são importantes para isolar o efeito das variávei
 *******************************************************************************/
 
 /*******************************************************************************
-6.1.1 Teste de Bondade de Ajuste de Hosmer-Lemeshow para o modelo completo na base de treinamento
-*******************************************************************************/
-estat gof if train == 1, group(10) table
-
-/*******************************************************************************
-6.1.2 Tabela de classificação para o modelo completo na base de treinamento
-*******************************************************************************/
-estat class if train == 1
-
-* 📌 Gerar predições na base de treinamento
-capture drop prob_pred_treino
-predict prob_pred_treino if train == 1, pr
-
-* 📌 Classificação prevista
-capture drop predicted_class_treino
-gen predicted_class_treino = (prob_pred_treino >= 0.5) if train == 1
-
-* 📌 Kappa na base de treinamento
-*ssc install kappaetc, replace
-kappaetc FoiPenalizadoSTJ predicted_class_treino if train == 1
-
-* 📌 Acurácia na base de treinamento
-capture drop correct_classification_treino
-gen correct_classification_treino = (FoiPenalizadoSTJ == predicted_class_treino) if train == 1
-sum correct_classification_treino if train == 1
-scalar prop_modelo_treino = r(mean)
-
-* 📌 No Information Rate (NIR)
-*O NIR representa a acurácia de um modelo nulo (baseline), que classifica sempre a categoria mais frequente.
-tabulate FoiPenalizadoSTJ if train == 1, matcell(freq_treino)
-scalar total_treino = freq_treino[1,1] + freq_treino[2,1]
-scalar max_treino = max(freq_treino[1,1], freq_treino[2,1])
-scalar prop_nir_treino = max_treino / total_treino
-
-* 📌 Comparação
-di "Acurácia na base de treinamento: " prop_modelo_treino
-di "NIR (treinamento): " prop_nir_treino
-
-if (prop_modelo_treino > prop_nir_treino) {
-    di "✅ Modelo completo supera o NIR na base de treino."
-}
-else {
-    di "⚠️ Modelo completo NÃO supera o NIR na base de treino."
-}
-
-* 📌 Teste de McNemar na base de treinamento
-* Criar a matriz de confusão da base de teste
-tabulate FoiPenalizadoSTJ predicted_class_treino if train == 1, matcell(mc_treino)
-
-* Extrair os valores da matriz
-scalar tn_treino = mc_treino[1,1] // Verdadeiro Negativo
-scalar fn_treino = mc_treino[2,1] // Falso Negativo
-scalar fp_treino = mc_treino[1,2] // Falso Positivo
-scalar tp_treino = mc_treino[2,2] // Verdadeiro Positivo
-
-* Mostrar os valores extraídos (opcional)
-di "TN: " tn_treino
-di "FN: " fn_treino
-di "FP: " fp_treino
-di "TP: " tp_treino
-
-* Rodar o teste de McNemar com os valores numéricos
-mcci `=tn_treino' `=fn_treino' `=fp_treino' `=tp_treino'
-
-/*******************************************************************************
-6.1.3 Curva ROC para o modelo completo na base de TREINO
-*******************************************************************************/
-lroc if train == 1
-graph export "lroc_IRDCcompleto_treino.png", replace
-
-/*******************************************************************************
-6.1.5 Tabela de classificação para o modelo completo na base de TESTE
-*******************************************************************************/
-estat class if train == 0
-
-* 📌 Gerar predições na base de treinamento
-capture drop prob_pred_teste
-predict prob_pred_teste if train == 0, pr
-
-* 📌 Classificação prevista
-capture drop predicted_class_teste
-gen predicted_class_teste = (prob_pred_teste >= 0.5) if train == 0
-
-* 📌 Kappa na base de treinamento
-kappaetc FoiPenalizadoSTJ predicted_class_teste if train == 0
-
-* 📌 Acurácia na base de treinamento
-capture drop correct_classification_teste
-gen correct_classification_teste = (FoiPenalizadoSTJ == predicted_class_teste) if train == 0
-sum correct_classification_teste if train == 0
-scalar prop_modelo_teste = r(mean)
-
-* 📌 No Information Rate (NIR)
-tabulate FoiPenalizadoSTJ if train == 0, matcell(freq_teste)
-scalar total_teste = freq_teste[1,1] + freq_teste[2,1]
-scalar max_teste = max(freq_teste[1,1], freq_teste[2,1])
-scalar prop_nir_teste = max_teste / total_teste
-
-
-* 📌 Comparação
-di "Acurácia na base de teste: " prop_modelo_teste
-di "NIR (teste): " prop_nir_teste
-
-if (prop_modelo_teste > prop_nir_teste) {
-    di "✅ Modelo completo supera o NIR na base de teste."
-}
-else {
-    di "⚠️ Modelo completo NÃO supera o NIR na base de teste."
-}
-
-* 📌 Teste de McNemar na base de teste
-* Criar a matriz de confusão da base de teste
-tabulate FoiPenalizadoSTJ predicted_class_teste if train == 0, matcell(mc_teste)
-
-* Extrair os valores da matriz
-scalar tn_teste = mc_teste[1,1] // Verdadeiro Negativo
-scalar fn_teste = mc_teste[2,1] // Falso Negativo
-scalar fp_teste = mc_teste[1,2] // Falso Positivo
-scalar tp_teste = mc_teste[2,2] // Verdadeiro Positivo
-
-* Mostrar os valores extraídos (opcional)
-di "TN: " tn_teste
-di "FN: " fn_teste
-di "FP: " fp_teste
-di "TP: " tp_teste
-
-* Rodar o teste de McNemar com os valores numéricos
-mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
-
-/*******************************************************************************
-6.1.6 Curva ROC para o modelo completo na base de TESTE
-*******************************************************************************/
-lroc if train == 0
-graph export "lroc_IRDCcompleto_teste.png", replace
-
-/*******************************************************************************
-6.1.7 – Ponto de Corte Ideal (Sensibilidade ≈ Especificidade)
-*******************************************************************************/
-
-* Reexecutar rapidamente o modelo (sem sobrescrever)
-quietly logit FoiPenalizadoSTJ `var_contabeis' `var_controle' if train == 1
-
-* Restaurar modelo salvo
-estimates restore IRDCcompleto
-
-* 📌 BASE DE TREINAMENTO
-* ------------------------------------------------------------
-* Garantir que as variáveis temporárias não existam
-capture drop prob_pred_treino
-capture drop cutoff
-capture drop sens
-capture drop spec
-capture drop difference
-capture drop abs_diff
-capture drop ordem
-
-* Gerar predições
-predict prob_pred_treino if train == 1, pr
-
-* Gerar sensitividade e especificidade para diferentes cutoffs
-lsens if train == 1, genprob(cutoff) gensens(sens) genspec(spec) nograph
-
-* Calcular diferença entre sensibilidade e especificidade
-gen difference = sens - spec
-gen abs_diff = abs(difference)
-
-* Obter ponto ideal (menor diferença)
-gen ordem = _n
-gsort abs_diff
-
-* Salvar valores do melhor ponto em scalars usando summarize
-summarize cutoff if abs_diff == abs_diff[1]
-scalar cutoff_ideal_treino = r(mean)
-scalar cutoff_completo = cutoff_ideal_treino
-
-summarize sens if abs_diff == abs_diff[1]
-scalar sens_ideal_treino = r(mean)
-
-summarize spec if abs_diff == abs_diff[1]
-scalar spec_ideal_treino = r(mean)
-
-* Mostrar o ponto ideal encontrado
-list cutoff sens spec abs_diff in 1, noobs clean
-
-* Plotar gráfico com destaque no ponto de cruzamento
-lsens if train == 1, ///
-    yline(`=sens_ideal_treino') xline(`=cutoff_ideal_treino') ///
-    scheme(s1color) ///
-    ylab(0 0.2 `=sens_ideal_treino' 0.8 1) ///
-    xlab(0 0.2 `=cutoff_ideal_treino' 0.8 1)
-
-graph export "cutoff_ideal_treino.png", replace
-
-/*******************************************************************************
-6.1.8 – Tabela de Classificação com Cutoff Ideal (Treinamento e Teste)
-*******************************************************************************/
-
-* 📌 BASE DE TREINAMENTO
-* ------------------------------------------------------------
-
-di "Tabela de classificação utilizando o cutoff ideal da base de TREINAMENTO: " cutoff_ideal_treino
-
-* Gerar classificação com o cutoff ideal
-capture drop predicted_class_treino
-gen predicted_class_treino = (prob_pred_treino >= cutoff_ideal_treino) if train == 1
-
-* Matriz de classificação detalhada
-estat class if train == 1
-
-* Kappa
-kappaetc FoiPenalizadoSTJ predicted_class_treino if train == 1
-
-* Acurácia
-capture drop correct_classification_treino
-gen correct_classification_treino = (FoiPenalizadoSTJ == predicted_class_treino) if train == 1
-sum correct_classification_treino if train == 1
-scalar prop_modelo_treino = r(mean)
-
-* No Information Rate
-tabulate FoiPenalizadoSTJ if train == 1, matcell(freq_treino)
-scalar total_treino = freq_treino[1,1] + freq_treino[2,1]
-scalar max_treino = max(freq_treino[1,1], freq_treino[2,1])
-scalar prop_nir_treino = max_treino / total_treino
-
-di "Acurácia (treino): " prop_modelo_treino
-di "NIR (treino): " prop_nir_treino
-
-if (prop_modelo_treino > prop_nir_treino) {
-    di "✅ Modelo supera o NIR na base de treino (cutoff ideal)."
-}
-else {
-    di "⚠️ Modelo NÃO supera o NIR na base de treino (cutoff ideal)."
-}
-
-* Teste de McNemar
-tabulate FoiPenalizadoSTJ predicted_class_treino if train == 1, matcell(mc_treino)
-scalar tn_treino = mc_treino[1,1]
-scalar fn_treino = mc_treino[2,1]
-scalar fp_treino = mc_treino[1,2]
-scalar tp_treino = mc_treino[2,2]
-mcci `=tn_treino' `=fn_treino' `=fp_treino' `=tp_treino'
-
-
-* 📌 BASE DE TESTE
-* ------------------------------------------------------------
-
-di "Tabela de classificação utilizando o cutoff ideal da base de TREINAMENTO (aplicado na base de TESTE): " cutoff_ideal_treino
-
-* Gerar classificação com o mesmo cutoff da base de treino
-capture drop predicted_class_teste
-gen predicted_class_teste = (prob_pred_teste >= cutoff_ideal_treino) if train == 0
-
-* Matriz de classificação detalhada
-estat class if train == 0
-
-* Kappa
-kappaetc FoiPenalizadoSTJ predicted_class_teste if train == 0
-
-* Acurácia
-capture drop correct_classification_teste
-gen correct_classification_teste = (FoiPenalizadoSTJ == predicted_class_teste) if train == 0
-sum correct_classification_teste if train == 0
-scalar prop_modelo_teste = r(mean)
-
-* No Information Rate
-tabulate FoiPenalizadoSTJ if train == 0, matcell(freq_teste)
-scalar total_teste = freq_teste[1,1] + freq_teste[2,1]
-scalar max_teste = max(freq_teste[1,1], freq_teste[2,1])
-scalar prop_nir_teste = max_teste / total_teste
-
-di "Acurácia (teste): " prop_modelo_teste
-di "NIR (teste): " prop_nir_teste
-
-if (prop_modelo_teste > prop_nir_teste) {
-    di "✅ Modelo supera o NIR na base de teste (cutoff ideal do treino)."
-}
-else {
-    di "⚠️ Modelo NÃO supera o NIR na base de teste (cutoff ideal do treino)."
-}
-
-* Teste de McNemar
-tabulate FoiPenalizadoSTJ predicted_class_teste if train == 0, matcell(mc_teste)
-scalar tn_teste = mc_teste[1,1]
-scalar fn_teste = mc_teste[2,1]
-scalar fp_teste = mc_teste[1,2]
-scalar tp_teste = mc_teste[2,2]
-mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
-
-
-/*******************************************************************************
-6.2 Regressão logística com seleção stepwise a 5% de significância no conjunto de treinamento
+6.2 Regressão logística com seleção stepwise a 10% de significância no conjunto de treinamento
 *******************************************************************************/
 * Capturar todas as variáveis que começam com "Porte_"
 unab Porte_vars : Porte_*
@@ -912,324 +705,7 @@ unab CNAE_vars : CNAE_*
 unab Natureza_vars : NaturezaJuridica_*
 
 * Definir variáveis contábeis e de controle corretamente
-local var_contabeis `Porte_vars' LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE
-
-*local var_controle `CNAE_vars' `Natureza_vars' log_vlrcontrato qtdecnaess~s idadedeanos qtepenalou~s
-
-local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
-
-*Regressão logística com seleção stepwise a 5% 
-sw, pr(.05): logit FoiPenalizadoSTJ `var_contabeis' `var_controle' if train == 1
-
-* Armazenar os resultados do modelo stepwise a 5%
-estimates store IRDC05
-
-* Teste de bondade de ajuste de Hosmer-Lemeshow para o modelo stepwise a 5%
-estat gof if train == 1, group(10) table
-
-
-/*******************************************************************************
-6.2.2 Tabela de classificação para o modelo stepwise a 5% na base de treinamento
-*******************************************************************************/
-estat class if train == 1
-
-* 📌 Gerar predições na base de treinamento
-capture drop prob_pred_treino
-predict prob_pred_treino if train == 1, pr
-
-* 📌 Classificação prevista
-capture drop predicted_class_treino
-gen predicted_class_treino = (prob_pred_treino >= 0.5) if train == 1
-
-* 📌 Kappa na base de treinamento
-*ssc install kappaetc, replace
-kappaetc FoiPenalizadoSTJ predicted_class_treino if train == 1
-
-* 📌 Acurácia na base de treinamento
-capture drop correct_classification_treino
-gen correct_classification_treino = (FoiPenalizadoSTJ == predicted_class_treino) if train == 1
-sum correct_classification_treino if train == 1
-scalar prop_modelo_treino = r(mean)
-
-* 📌 No Information Rate (NIR)
-*O NIR representa a acurácia de um modelo nulo (baseline), que classifica sempre a categoria mais frequente.
-tabulate FoiPenalizadoSTJ if train == 1, matcell(freq_treino)
-scalar total_treino = freq_treino[1,1] + freq_treino[2,1]
-scalar max_treino = max(freq_treino[1,1], freq_treino[2,1])
-scalar prop_nir_treino = max_treino / total_treino
-
-* 📌 Comparação
-di "Acurácia na base de treinamento: " prop_modelo_treino
-di "NIR (treinamento): " prop_nir_treino
-
-if (prop_modelo_treino > prop_nir_treino) {
-    di "✅ Modelo stepwise 5% supera o NIR na base de treino."
-}
-else {
-    di "⚠️ Modelo stepwise 5% NÃO supera o NIR na base de treino."
-}
-
-* 📌 Teste de McNemar na base de treinamento
-* Criar a matriz de confusão da base de teste
-tabulate FoiPenalizadoSTJ predicted_class_treino if train == 1, matcell(mc_treino)
-
-* Extrair os valores da matriz
-scalar tn_treino = mc_treino[1,1] // Verdadeiro Negativo
-scalar fn_treino = mc_treino[2,1] // Falso Negativo
-scalar fp_treino = mc_treino[1,2] // Falso Positivo
-scalar tp_treino = mc_treino[2,2] // Verdadeiro Positivo
-
-* Mostrar os valores extraídos (opcional)
-di "TN: " tn_treino
-di "FN: " fn_treino
-di "FP: " fp_treino
-di "TP: " tp_treino
-
-* Rodar o teste de McNemar com os valores numéricos
-mcci `=tn_treino' `=fn_treino' `=fp_treino' `=tp_treino'
-
-/*******************************************************************************
-6.2.3 Curva ROC para o modelo stepwise a 5% na base de TREINO
-*******************************************************************************/
-lroc if train == 1
-graph export "lroc_IRDC05_treino.png", replace
-
-/*******************************************************************************
-6.2.5 Tabela de classificação para o modelo stepwise a 5% na base de TESTE
-*******************************************************************************/
-estat class if train == 0
-
-* 📌 Gerar predições na base de teste
-capture drop prob_pred_teste
-predict prob_pred_teste if train == 0, pr
-
-* 📌 Classificação prevista
-capture drop predicted_class_teste
-gen predicted_class_teste = (prob_pred_teste >= 0.5) if train == 0
-
-* 📌 Kappa na base de teste
-kappaetc FoiPenalizadoSTJ predicted_class_teste if train == 0
-
-* 📌 Acurácia na base de teste
-capture drop correct_classification_teste
-gen correct_classification_teste = (FoiPenalizadoSTJ == predicted_class_teste) if train == 0
-sum correct_classification_teste if train == 0
-scalar prop_modelo_teste = r(mean)
-
-* 📌 No Information Rate (NIR)
-tabulate FoiPenalizadoSTJ if train == 0, matcell(freq_teste)
-scalar total_teste = freq_teste[1,1] + freq_teste[2,1]
-scalar max_teste = max(freq_teste[1,1], freq_teste[2,1])
-scalar prop_nir_teste = max_teste / total_teste
-
-
-* 📌 Comparação
-di "Acurácia na base de teste: " prop_modelo_teste
-di "NIR (teste): " prop_nir_teste
-
-if (prop_modelo_teste > prop_nir_teste) {
-    di "✅ Modelo stepwise 5% supera o NIR na base de teste."
-}
-else {
-    di "⚠️ Modelo stepwise 5% NÃO supera o NIR na base de teste."
-}
-
-* 📌 Teste de McNemar na base de teste
-* Criar a matriz de confusão da base de teste
-tabulate FoiPenalizadoSTJ predicted_class_teste if train == 0, matcell(mc_teste)
-
-* Extrair os valores da matriz
-scalar tn_teste = mc_teste[1,1] // Verdadeiro Negativo
-scalar fn_teste = mc_teste[2,1] // Falso Negativo
-scalar fp_teste = mc_teste[1,2] // Falso Positivo
-scalar tp_teste = mc_teste[2,2] // Verdadeiro Positivo
-
-* Mostrar os valores extraídos (opcional)
-di "TN: " tn_teste
-di "FN: " fn_teste
-di "FP: " fp_teste
-di "TP: " tp_teste
-
-* Rodar o teste de McNemar com os valores numéricos
-mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
-
-/*******************************************************************************
-6.2.6 Curva ROC para o modelo stepwise a 5% na base de TESTE
-*******************************************************************************/
-lroc if train == 0
-graph export "lroc_IRDC05_teste.png", replace
-
-/*******************************************************************************
-6.2.7 – Ponto de Corte Ideal (Sensibilidade ≈ Especificidade)
-*******************************************************************************/
-
-* Reexecutar rapidamente o modelo (sem sobrescrever)
-quietly logit FoiPenalizadoSTJ `var_contabeis' `var_controle' if train == 1
-
-* Restaurar modelo salvo
-estimates restore IRDC05
-
-* 📌 BASE DE TREINAMENTO
-* ------------------------------------------------------------
-* Garantir que as variáveis temporárias não existam
-capture drop prob_pred_treino
-capture drop cutoff
-capture drop sens
-capture drop spec
-capture drop difference
-capture drop abs_diff
-capture drop ordem
-
-* Gerar predições
-predict prob_pred_treino if train == 1, pr
-
-* Gerar sensitividade e especificidade para diferentes cutoffs
-lsens if train == 1, genprob(cutoff) gensens(sens) genspec(spec) nograph
-
-* Calcular diferença entre sensibilidade e especificidade
-gen difference = sens - spec
-gen abs_diff = abs(difference)
-
-* Obter ponto ideal (menor diferença)
-gen ordem = _n
-gsort abs_diff
-
-* Salvar valores do melhor ponto em scalars usando summarize
-summarize cutoff if abs_diff == abs_diff[1]
-scalar cutoff_ideal_treino = r(mean)
-scalar cutoff_step05 = cutoff_ideal_treino
-
-
-summarize sens if abs_diff == abs_diff[1]
-scalar sens_ideal_treino = r(mean)
-
-summarize spec if abs_diff == abs_diff[1]
-scalar spec_ideal_treino = r(mean)
-
-* Mostrar o ponto ideal encontrado
-list cutoff sens spec abs_diff in 1, noobs clean
-
-* Plotar gráfico com destaque no ponto de cruzamento
-lsens if train == 1, ///
-    yline(`=sens_ideal_treino') xline(`=cutoff_ideal_treino') ///
-    scheme(s1color) ///
-    ylab(0 0.2 `=sens_ideal_treino' 0.8 1) ///
-    xlab(0 0.2 `=cutoff_ideal_treino' 0.8 1)
-
-graph export "cutoff_ideal_IRDC05_treino.png", replace
-
-/*******************************************************************************
-6.2.8 – Tabela de Classificação com Cutoff Ideal (Treinamento e Teste)
-*******************************************************************************/
-
-* 📌 BASE DE TREINAMENTO
-* ------------------------------------------------------------
-
-di "Tabela de classificação utilizando o cutoff ideal da base de TREINAMENTO: " cutoff_ideal_treino
-
-* Gerar classificação com o cutoff ideal
-capture drop predicted_class_treino
-gen predicted_class_treino = (prob_pred_treino >= cutoff_ideal_treino) if train == 1
-
-* Matriz de classificação detalhada
-estat class if train == 1
-
-* Kappa
-kappaetc FoiPenalizadoSTJ predicted_class_treino if train == 1
-
-* Acurácia
-capture drop correct_classification_treino
-gen correct_classification_treino = (FoiPenalizadoSTJ == predicted_class_treino) if train == 1
-sum correct_classification_treino if train == 1
-scalar prop_modelo_treino = r(mean)
-
-* No Information Rate
-tabulate FoiPenalizadoSTJ if train == 1, matcell(freq_treino)
-scalar total_treino = freq_treino[1,1] + freq_treino[2,1]
-scalar max_treino = max(freq_treino[1,1], freq_treino[2,1])
-scalar prop_nir_treino = max_treino / total_treino
-
-di "Acurácia (treino): " prop_modelo_treino
-di "NIR (treino): " prop_nir_treino
-
-if (prop_modelo_treino > prop_nir_treino) {
-    di "✅ Modelo stepwise 5% supera o NIR na base de treino (cutoff ideal)."
-}
-else {
-    di "⚠️ Modelo stepwise 5% NÃO supera o NIR na base de treino (cutoff ideal)."
-}
-
-* Teste de McNemar
-tabulate FoiPenalizadoSTJ predicted_class_treino if train == 1, matcell(mc_treino)
-scalar tn_treino = mc_treino[1,1]
-scalar fn_treino = mc_treino[2,1]
-scalar fp_treino = mc_treino[1,2]
-scalar tp_treino = mc_treino[2,2]
-mcci `=tn_treino' `=fn_treino' `=fp_treino' `=tp_treino'
-
-
-* 📌 BASE DE TESTE
-* ------------------------------------------------------------
-
-di "Tabela de classificação utilizando o cutoff ideal da base de TREINAMENTO (aplicado na base de TESTE): " cutoff_ideal_treino
-
-* Gerar classificação com o mesmo cutoff da base de teste
-capture drop predicted_class_teste
-gen predicted_class_teste = (prob_pred_teste >= cutoff_ideal_treino) if train == 0
-
-* Matriz de classificação detalhada
-estat class if train == 0
-
-* Kappa
-kappaetc FoiPenalizadoSTJ predicted_class_teste if train == 0
-
-* Acurácia
-capture drop correct_classification_teste
-gen correct_classification_teste = (FoiPenalizadoSTJ == predicted_class_teste) if train == 0
-sum correct_classification_teste if train == 0
-scalar prop_modelo_teste = r(mean)
-
-* No Information Rate
-tabulate FoiPenalizadoSTJ if train == 0, matcell(freq_teste)
-scalar total_teste = freq_teste[1,1] + freq_teste[2,1]
-scalar max_teste = max(freq_teste[1,1], freq_teste[2,1])
-scalar prop_nir_teste = max_teste / total_teste
-
-di "Acurácia (teste): " prop_modelo_teste
-di "NIR (teste): " prop_nir_teste
-
-if (prop_modelo_teste > prop_nir_teste) {
-    di "✅ Modelo stepwise 5% supera o NIR na base de teste (cutoff ideal do treino)."
-}
-else {
-    di "⚠️ Modelo stepwise 5% NÃO supera o NIR na base de teste (cutoff ideal do treino)."
-}
-
-* Teste de McNemar
-tabulate FoiPenalizadoSTJ predicted_class_teste if train == 0, matcell(mc_teste)
-scalar tn_teste = mc_teste[1,1]
-scalar fn_teste = mc_teste[2,1]
-scalar fp_teste = mc_teste[1,2]
-scalar tp_teste = mc_teste[2,2]
-mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
-
-/*******************************************************************************
-6.3 Regressão logística com seleção stepwise a 10% de significância no conjunto de treinamento
-*******************************************************************************/
-* Capturar todas as variáveis que começam com "Porte_"
-unab Porte_vars : Porte_*
-
-* Capturar todas as variáveis que começam com "CNAE_"
-unab CNAE_vars : CNAE_*
-
-* Capturar todas as variáveis que começam com "NaturezaJuridica_"
-unab Natureza_vars : NaturezaJuridica_*
-
-* Definir variáveis contábeis e de controle corretamente
-local var_contabeis `Porte_vars' LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE
-
-*local var_controle `CNAE_vars' `Natureza_vars' log_vlrcontrato qtdecnaess~s idadedeanos qtepenalou~s
-
+local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid ImobRecNC GiroAtivo
 local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
 
 *Regressão logística com seleção stepwise a 10% 
@@ -1242,7 +718,7 @@ estimates store IRDC10
 estat gof if train == 1, group(10) table
 
 /*******************************************************************************
-6.3.2 Tabela de classificação para o modelo stepwise a 10% na base de treinamento
+6.2.2 Tabela de classificação para o modelo stepwise a 10% na base de treinamento
 *******************************************************************************/
 estat class if train == 1
 
@@ -1302,13 +778,13 @@ di "TP: " tp_treino
 mcci `=tn_treino' `=fn_treino' `=fp_treino' `=tp_treino'
 
 /*******************************************************************************
-6.3.3 Curva ROC para o modelo stepwise a 10% na base de TREINO
+6.2.3 Curva ROC para o modelo stepwise a 10% na base de TREINO
 *******************************************************************************/
 lroc if train == 1
 graph export "lroc_IRDC10_treino.png", replace
 
 /*******************************************************************************
-6.3.4 Tabela de classificação para o modelo stepwise a 10% na base de TESTE
+6.2.4 Tabela de classificação para o modelo stepwise a 10% na base de TESTE
 *******************************************************************************/
 estat class if train == 0
 
@@ -1367,13 +843,13 @@ di "TP: " tp_teste
 mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
 
 /*******************************************************************************
-6.3.5 Curva ROC para o modelo stepwise a 10% na base de TESTE
+6.2.5 Curva ROC para o modelo stepwise a 10% na base de TESTE
 *******************************************************************************/
 lroc if train == 0
 graph export "lroc_IRDC10_teste.png", replace
 
 /*******************************************************************************
-6.3.6 – Ponto de Corte Ideal (Sensibilidade ≈ Especificidade)
+6.2.6 – Ponto de Corte Ideal (Sensibilidade ≈ Especificidade)
 *******************************************************************************/
 
 * Reexecutar rapidamente o modelo (sem sobrescrever)
@@ -1432,7 +908,7 @@ lsens if train == 1, ///
 graph export "cutoff_ideal_IRDC10_treino.png", replace
 
 /*******************************************************************************
-6.3.7 – Tabela de Classificação com Cutoff Ideal (Treinamento e Teste)
+6.2.7 – Tabela de Classificação com Cutoff Ideal (Treinamento e Teste)
 *******************************************************************************/
 
 * 📌 BASE DE TREINAMENTO
@@ -1527,20 +1003,7 @@ scalar tp_teste = mc_teste[2,2]
 mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
 
 /*******************************************************************************
-6.4 Teste de Razão de Verossimilhança entre os Modelos Aninhados(LR Test)
-*******************************************************************************/
-
-di "📊 Teste de Razão de Verossimilhança: IRDCcompleto vs IRDC05 (stepwise 5%)"
-lrtest IRDCcompleto IRDC05
-
-di "📊 Teste de Razão de Verossimilhança: IRDCcompleto vs IRDC10 (stepwise 10%)"
-lrtest IRDCcompleto IRDC10
-
-di "📊 Teste de Razão de Verossimilhança: IRDC05 (stepwise 5%) vs IRDC10 (stepwise 10%)"
-lrtest IRDC05 IRDC10
-
-/*******************************************************************************
-6.5 Regressão logística com seleção via LASSO (penalização L1) no conjunto de treinamento
+6.3 Regressão logística com seleção via LASSO (penalização L1) no conjunto de treinamento
 
  O LASSO (Least Absolute Shrinkage and Selection Operator) realiza seleção automática
 de variáveis e reduz o risco de overfitting (sobreajuste), especialmente útil em 
@@ -1561,8 +1024,7 @@ unab DivisaoCNAE_vars : DivisaoCNAE_*
 unab Natureza_vars : NaturezaJuridica_*
 
 * Definir variáveis contábeis e de controle corretamente
-local var_contabeis `Porte_vars' LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE
-
+local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid ImobRecNC GiroAtivo
 local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
 
 *local var_controle `DivisaoCNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
@@ -1578,7 +1040,7 @@ estimates store IRDC_LASSO
 
 
 /*******************************************************************************
-6.5.1 – Exportar Coeficientes Selecionados do Modelo LASSO (via log + conversão via Python)
+6.3.1 – Exportar Coeficientes Selecionados do Modelo LASSO (via log + conversão via Python)
 *******************************************************************************/
 
 * Garantir que qualquer log anterior esteja fechado
@@ -1597,7 +1059,7 @@ display "✅ coef_lasso.txt exportado com sucesso."
 
 
 /*******************************************************************************
-6.5.2 Tabela de Classificação, Acurácia, NIR e Teste de McNemar para o 
+6.3.2 Tabela de Classificação, Acurácia, NIR e Teste de McNemar para o 
 Modelo LASSO na base de treino
 *******************************************************************************/
 
@@ -1654,7 +1116,7 @@ di "TP: " tp_lasso
 mcci `=tn_lasso' `=fn_lasso' `=fp_lasso' `=tp_lasso'
 
 /*******************************************************************************
-6.5.3 Curva ROC para o modelo LASSO na base de TREINO
+6.3.3 Curva ROC para o modelo LASSO na base de TREINO
 *******************************************************************************/
 capture drop prob_pred_lasso_treino
 predict prob_pred_lasso_treino if train == 1, xb
@@ -1662,7 +1124,7 @@ roctab FoiPenalizadoSTJ prob_pred_lasso_treino if train == 1, graph
 graph export "ROC_LASSO_treino.png", replace
 
 /*******************************************************************************
-6.5.4 Avaliação do modelo LASSO na base de TESTE
+6.3.4 Avaliação do modelo LASSO na base de TESTE
 *******************************************************************************/
 
 * 📌 Gerar predições de probabilidade na base de teste
@@ -1714,17 +1176,17 @@ di "TP: " tp_teste
 mcci `=tn_teste' `=fn_teste' `=fp_teste' `=tp_teste'
 
 /*******************************************************************************
-6.5.5 Curva ROC para o modelo LASSO na base de TESTE
+6.3.5 Curva ROC para o modelo LASSO na base de TESTE
 *******************************************************************************/
 roctab FoiPenalizadoSTJ prob_pred_lasso_teste if train == 0, graph
 graph export "ROC_LASSO_teste.png", replace
 
 /*******************************************************************************
-6.5.6 – Classificação com Cutoff Médio (modelo LASSO)
+6.3.6 – Classificação com Cutoff Médio (modelo LASSO)
 *******************************************************************************/
 
 * 📌 Definir o cutoff médio com base nos modelos completos, stepwise 5% e stepwise 10%
-scalar cutoff_medio = (cutoff_completo + cutoff_step05 + cutoff_step10) / 3
+scalar cutoff_medio = cutoff_step10
 di "📌 Cutoff médio dos modelos: " cutoff_medio
 
 * ========================================================
@@ -1743,6 +1205,31 @@ scalar tn_lasso_medio = mc_lasso_treino[1,1]
 scalar fn_lasso_medio = mc_lasso_treino[2,1]
 scalar fp_lasso_medio = mc_lasso_treino[1,2]
 scalar tp_lasso_medio = mc_lasso_treino[2,2]
+
+* 📌 Kappa
+kappaetc FoiPenalizadoSTJ predicted_class_lasso_treino if train == 1
+
+* 📌 Acurácia
+capture drop correct_lasso_medio
+gen correct_lasso_medio = (FoiPenalizadoSTJ == predicted_class_lasso_treino) if train == 1
+sum correct_lasso_medio if train == 1
+scalar acuracia_lasso_medio = r(mean)
+
+* 📌 No Information Rate (NIR)
+tabulate FoiPenalizadoSTJ if train == 1, matcell(freq_lasso_medio)
+scalar total_lasso_medio = freq_lasso_medio[1,1] + freq_lasso_medio[2,1]
+scalar max_lasso_medio = max(freq_lasso_medio[1,1], freq_lasso_medio[2,1])
+scalar nir_lasso_medio = max_lasso_medio / total_lasso_medio
+
+di "Acurácia (treino, cutoff médio): " acuracia_lasso_medio
+di "NIR (treino, cutoff médio): " nir_lasso_medio
+
+if (acuracia_lasso_medio > nir_lasso_medio) {
+    di "✅ Modelo LASSO (cutoff médio) supera o NIR na base de treino."
+}
+else {
+    di "⚠️ Modelo LASSO (cutoff médio) NÃO supera o NIR na base de treino."
+}
 
 * 📌 Teste de McNemar
 mcci `=tn_lasso_medio' `=fn_lasso_medio' `=fp_lasso_medio' `=tp_lasso_medio'
@@ -1764,8 +1251,37 @@ scalar fn_lasso_medio_teste = mc_lasso_teste[2,1]
 scalar fp_lasso_medio_teste = mc_lasso_teste[1,2]
 scalar tp_lasso_medio_teste = mc_lasso_teste[2,2]
 
+* 📌 Kappa
+kappaetc FoiPenalizadoSTJ predicted_class_lasso_teste if train == 0
+
+* 📌 Acurácia
+capture drop correct_lasso_medio_teste
+gen correct_lasso_medio_teste = (FoiPenalizadoSTJ == predicted_class_lasso_teste) if train == 0
+sum correct_lasso_medio_teste if train == 0
+scalar acuracia_lasso_medio_teste = r(mean)
+
+* 📌 No Information Rate (NIR)
+tabulate FoiPenalizadoSTJ if train == 0, matcell(freq_lasso_medio_teste)
+scalar total_lasso_medio_teste = freq_lasso_medio_teste[1,1] + freq_lasso_medio_teste[2,1]
+scalar max_lasso_medio_teste = max(freq_lasso_medio_teste[1,1], freq_lasso_medio_teste[2,1])
+scalar nir_lasso_medio_teste = max_lasso_medio_teste / total_lasso_medio_teste
+
+di "Acurácia (teste, cutoff médio): " acuracia_lasso_medio_teste
+di "NIR (teste, cutoff médio): " nir_lasso_medio_teste
+
+if (acuracia_lasso_medio_teste > nir_lasso_medio_teste) {
+    di "✅ Modelo LASSO (cutoff médio) supera o NIR na base de teste."
+}
+else {
+    di "⚠️ Modelo LASSO (cutoff médio) NÃO supera o NIR na base de teste."
+}
+
 * 📌 Teste de McNemar
 mcci `=tn_lasso_medio_teste' `=fn_lasso_medio_teste' `=fp_lasso_medio_teste' `=tp_lasso_medio_teste'
+
+
+*******************************************************************************/
+
 
 /*******************************************************************************
 FIM DO SCRIPT
