@@ -1,6 +1,7 @@
 # Arquivos do Sistema Operacional
 .DS_Store
 Thumbs.db
+git-atualizar.bat
 
 # Arquivos de log
 npm-debug.log*
