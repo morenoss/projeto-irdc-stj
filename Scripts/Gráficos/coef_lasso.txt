@@ -1,0 +1,83 @@
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  lassolog
+       log:  C:\Users\morenos\OneDrive - STJ- Superior Tribunal de Justiça\UnB\Mestrado em Governança e Inovação em Políticas Públicas\Projeto\Dados\Diretorio Stata\coef_lasso.txt
+  log type:  text
+ opened on:  31 Jul 2025, 17:09:34
+
+. 
+. * Exibir os coeficientes selecionados
+. lassocoef, display(coef, postselection)
+
+-----------------------------------
+                       | IRDC_LASSO
+-----------------------+-----------
+               Porte_1 |  -.1998718
+               Porte_2 |    .161732
+               Porte_3 |   .0750556
+      Liquidez_Media_Z |   .0311332
+     Estrutura_Media_Z |  -.1466741
+        Margem_Media_Z |   .0002438
+         z_LiqCorAjust |   -.066545
+            z_EndGeral |   .3685391
+           z_ImobRecNC |   -.418532
+         z_CompEndivid |    .079418
+           z_GiroAtivo |   .0453944
+                 z_ROI |  -.0599903
+                 z_ROE |  -.2819734
+                CNAE_1 |  -.7761239
+                CNAE_2 |  -19.41626
+                CNAE_3 |   19.06766
+                CNAE_4 |   19.12641
+                CNAE_5 |   .4412466
+                CNAE_6 |  -.1395935
+                CNAE_8 |  -.6024977
+                CNAE_9 |   17.77768
+               CNAE_10 |   18.47917
+               CNAE_11 |   18.49039
+               CNAE_14 |   18.71976
+               CNAE_15 |   18.90927
+               CNAE_16 |   18.88389
+               CNAE_17 |   18.44502
+               CNAE_18 |  -.1963496
+               CNAE_19 |   .0636502
+               CNAE_20 |   2.612778
+               CNAE_21 |  -.5079672
+               CNAE_22 |  -1.841828
+               CNAE_23 |  -.6391353
+               CNAE_24 |  -18.89076
+               CNAE_25 |   .4477604
+               CNAE_26 |   19.07099
+               CNAE_27 |   -19.2054
+               CNAE_28 |  -.2386207
+               CNAE_29 |   .9577632
+               CNAE_30 |   .5955041
+               CNAE_31 |  -19.18762
+               CNAE_32 |  -1.176223
+               CNAE_33 |   1.095565
+               CNAE_34 |  -18.99002
+               CNAE_35 |  -1.155944
+               CNAE_36 |  -18.37497
+               CNAE_37 |  -18.59457
+               CNAE_38 |   18.64299
+    NaturezaJuridica_4 |   2.044075
+    NaturezaJuridica_9 |   2.531686
+   NaturezaJuridica_10 |  -15.55917
+     z_log_vlrcontrato |    .272182
+z_QtdeCNAEsSecundarios |  -.3190683
+         z_IdadedeAnos |   -.151559
+z_QtePenalOutrosOrgaos |   .4338163
+                 _cons |  -1.863688
+-----------------------------------
+Legend:
+  b - base level
+  e - empty cell
+  o - omitted
+
+. 
+. * Fechar o log
+. log close lassolog
+      name:  lassolog
+       log:  C:\Users\morenos\OneDrive - STJ- Superior Tribunal de Justiça\UnB\Mestrado em Governança e Inovação em Políticas Públicas\Projeto\Dados\Diretorio Stata\coef_lasso.txt
+  log type:  text
+ closed on:  31 Jul 2025, 17:09:34
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

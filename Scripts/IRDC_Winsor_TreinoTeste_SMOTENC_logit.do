@@ -2,9 +2,9 @@
 PREPARAÇÃO - MACROS-CAMINHOS E INÍCIO DO LOG DE GRAVAÇÃO DOS RESULTADOS
 *******************************************************************************/
 * Definindo os diretórios de trabalho
-local basedados     "INFORME AQUI O LOCAL ONDE O SCRIPT ESTÁ SALVO. SERÁ A RAIZ ONDE TUDO SERÁ SALVO"
+local basedados     "C:\Users\...INFORME AQUI O DIRETÓRIO ONDE O SCRIPT ESTÁ SALVO"
 local resultados    "`basedados'/Resultados"
-local pacotes       "`basedados'/Pacotes" **SALVE AQUI O PACOTE DE ANÁLISE DE CORRELAÇÃO**
+local pacotes       "`basedados'/Pacotes" 
 
 *Instala e ativa pacotes locais para heatmap
 adopath + "`pacotes'"
@@ -21,7 +21,7 @@ set more off
 capture log close IRDC_Resultados
 
 * Salvar log das estatísticas descritivas e do codebook
-log using "`resultados'\IRDC_UFBAAPCONT.log", replace text name ("IRDC_Resultados")
+log using "`resultados'\IRDC_RAC.log", replace text name ("IRDC_Resultados")
 
 /*******************************************************************************
 Projeto:            Índice de Risco de Descumprimento Contratual (IRDC)
@@ -43,39 +43,43 @@ dos fornecedores do STJ. As etapas incluem:
    para reduzir o impacto de outliers extremos, preservando a variabilidade e robustez
    das análises subsequentes.
 
-4. **Imputação de valores faltantes**: preenchimento de dados ausentes por média ou mediana,
+4. **Estatísticas descritivas por grupo**: geração de tabelas de estatísticas descritivas
+   (média, desvio padrão, mínimo, máximo) para empresas penalizadas e não penalizadas,
+   antes e após a winsorização, facilitando análise comparativa de perfil e identificação de padrões.
+
+5. **Imputação de valores faltantes**: preenchimento de dados ausentes por média ou mediana,
    conforme o coeficiente de variação, para garantir integridade e qualidade da base.
 
-5. **Criação dos índices sintéticos (Z-score)**: combinação de variáveis colineares em índices
-   sintéticos para reduzir dimensionalidade e multicolinearidade, facilitando a modelagem.
+6. **Padronização z-score de todas as variáveis contínuas**: todas as variáveis contínuas e indicadores
+   foram transformados para escala padrão (média 0, desvio-padrão 1), conferindo maior robustez,
+   comparabilidade e estabilidade aos modelos preditivos subsequentes.
 
-6. **Matriz de correlação final dos índices sintéticos e variáveis contínuas**:
-   cálculo da matriz após a imputação e criação dos índices para validar a estrutura dos dados.
+7. **Criação dos índices sintéticos**: combinação de variáveis colineares já padronizadas
+   em índices sintéticos para reduzir dimensionalidade e multicolinearidade, facilitando a modelagem.
 
-7. **Estatísticas descritivas por grupo**: geração de tabelas de estatísticas descritivas
-   (média, desvio padrão, mínimo, máximo) para empresas penalizadas e não penalizadas,
-   antes e após a winsorização, facilitando análise comparativa de perfil.
+8. **Matriz de correlação final dos índices sintéticos e variáveis contínuas**:
+   cálculo da matriz após a imputação, padronização e criação dos índices para validar a estrutura dos dados.
 
-8. **Separação das amostras em treinamento (80%) e teste (20%)**: a separação das
+9. **Separação das amostras em treinamento (80%) e teste (20%)**: a separação das
    amostras é realizada obedecendo a proporção exata de empresas penalizadas e não penalizadas.
 
-9. **Balanceamento da amostra de treinamento**: aplicação da técnica SMOTENC em Python para lidar com
-   desbalanceamento da variável dependente (penalização pelo STJ), com codificação de
-   variáveis categóricas e posterior reintegração ao Stata.
+10. **Balanceamento da amostra de treinamento**: aplicação da técnica SMOTENC em Python para lidar com
+    desbalanceamento da variável dependente (penalização pelo STJ), com codificação de
+    variáveis categóricas e posterior reintegração ao Stata.
 
-10. **Agrupamento de CNAEs raros**: definição do mínimo de ocorrências para manter CNAE
+11. **Agrupamento de CNAEs raros**: definição do mínimo de ocorrências para manter CNAE
     como categoria isolada (local freq_minima = 10). As categorias com menor frequência
     foram agrupadas sob o código -1 para reduzir a sparsidade da matriz de variáveis dummies
     e aumentar a estabilidade dos coeficientes.
 
-11. **Conversão e criação de variáveis dummies para variáveis categóricas**:
+12. **Conversão e criação de variáveis dummies para variáveis categóricas**:
     transformação de variáveis categóricas em variáveis dummy após o balanceamento.
 
-12. **Modelagem e avaliação preditiva**:
+13. **Modelagem e avaliação preditiva**:
     - Modelo logit completo (com todas as variáveis)
     - Modelos logit com seleção stepwise
     - Modelo com penalização LASSO
-    Cada modelo é avaliado com métricas como acurácia, Kappa, NIR, teste de McNemar,
+    Todos os modelos são avaliados com métricas como acurácia, Kappa, NIR, teste de McNemar,
     curvas ROC e definição do ponto de corte ideal baseado na equivalência entre
     sensibilidade e especificidade. As métricas são aplicadas nos conjuntos de treinamento e teste.
 
@@ -84,8 +88,9 @@ Identificar o melhor modelo para predição da variável binária `FoiPenalizado
 avaliando o poder explicativo de indicadores contábeis, porte, natureza jurídica, CNAE,
 e variáveis de histórico contratual da empresa.
 
-Última atualização: 15/07/2025
+Última atualização: 31/07/2025
 *******************************************************************************/
+
 
    
 
@@ -156,6 +161,9 @@ graph export "heatmap_correlacao.png", replace width(2400)
 1.2 – Winsorização das variáveis contínuas (antes da imputação)
 *******************************************************************************/
 
+* Substituir todos os valores missing (.) de vlrcontrato por 0
+replace vlrcontrato = 0 if missing(vlrcontrato)
+
 ssc install winsor2, replace
 local winsor_vars LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE vlrcontrato
 
@@ -178,11 +186,6 @@ tabstat LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin
 /*******************************************************************************
 ETAPA 2 - TRANSFORMAÇÃO DE VARIÁVEIS 
 *******************************************************************************/
-* NÃO gerar dummies ainda — manter Porte, CNAE e NaturezaJuridica para o SMOTENC
-
-* Ajuste log do valor dos contratos
-replace vlrcontrato = 1 if vlrcontrato == 0 | vlrcontrato == .
-gen log_vlrcontrato = log(vlrcontrato)
 
 * Dropar CNPJ antes de exportar
 drop CNPJ
@@ -236,29 +239,46 @@ di as text "══════════════════════�
 2.2 - Criação dos Índices Sintéticos (Z-SCORE)
 *******************************************************************************/
 
-/* (A) Liquidez: combina LiqCorrente, LiqGeral, SolvGeral e IndepFin */
+/* (A) Liquidez_Media: combina LiqCorrente, LiqGeral, SolvGeral e IndepFin */
 foreach var in LiqCorrente LiqGeral SolvGeral IndepFin {
     egen z_`var' = std(`var')
 }
 gen Liquidez_Media_Z = (z_LiqCorrente + z_LiqGeral + z_SolvGeral + z_IndepFin)/4
 
-/* (B) Estrutura: combina ImobilPL, PtpCapTerce e EndGeral */
-foreach var in ImobilPL PtpCapTerce EndGeral {
+/* (B) Estrutura_Media: combina ImobilPL e PtpCapTerce  */
+foreach var in ImobilPL PtpCapTerce {
     egen z_`var' = std(`var')
 }
-gen Estrutura_Media_Z = (z_ImobilPL + z_PtpCapTerce + EndGeral)/2
+gen Estrutura_Media_Z = (z_ImobilPL + z_PtpCapTerce)/2
 
-/* (C) Margem: combina MargOp e MargLiq */
+/* (C) Margem_Media: combina MargOp e MargLiq */
 egen z_MargOp = std(MargOp)
 egen z_MargLiq = std(MargLiq)
 gen Margem_Media_Z = (z_MargOp + z_MargLiq)/2
 
+/* Padronize as variáveis contínuas que ficarão SEPARADAS */
+egen z_LiqCorAjust = std(LiqCorAjust)
+egen z_EndGeral = std(EndGeral)
+egen z_ImobRecNC   = std(ImobRecNC)
+egen z_CompEndivid = std(CompEndivid)
+egen z_GiroAtivo   = std(GiroAtivo)
+egen z_ROI         = std(ROI)
+egen z_ROE         = std(ROE)
+egen z_vlrcontrato = std(vlrcontrato)
+egen z_QtdeCNAEsSecundarios = std(QtdeCNAEsSecundarios)
+egen z_QtePenalOutrosOrgaos = std(QtePenalOutrosOrgaos)
+egen z_IdadedeAnos = std(IdadedeAnos)
+
+
+
 /*******************************************************************************
-2.2.1 - Matriz de correção dos índices sintéticos (e outras variáveis contínuas) 
+2.2.2 - Matriz de correlação dos índices sintéticos (e outras variáveis contínuas)
 *******************************************************************************/
 
 /* Defina as variáveis contínuas finais para correlação */
-local correl_final Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid GiroAtivo log_vlrcontrato QtdeCNAEsSecundarios QtePenalOutrosOrgaos
+local correl_final Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ///
+    z_LiqCorAjust z_EndGeral z_ImobRecNC z_CompEndivid z_GiroAtivo ///
+    z_ROI z_ROE z_vlrcontrato z_QtdeCNAEsSecundarios z_QtePenalOutrosOrgaos z_IdadedeAnos
 
 /* Calcule a matriz de correlação */
 correlate `correl_final', means
@@ -648,6 +668,7 @@ Ela indica se o fornecedor foi penalizado pelo STJ (1) ou não (0).
 As variáveis independentes serão divididas em variáveis contábeis e variáveis de controle.
 
 *******************************************************************************/
+
 * 6.1 Listar todas as variáveis disponíveis
 ds
 
@@ -660,14 +681,15 @@ unab CNAE_vars : CNAE_*
 * Capturar todas as variáveis que começam com "NaturezaJuridica_"
 unab Natureza_vars : NaturezaJuridica_*
 
-* Definir variáveis contábeis e de controle corretamente
-*ANTES DA COMBINAÇÃO DE VARIÁVEISlocal var_contabeis `Porte_vars' LiqCorrente LiqGeral LiqCorAjust SolvGeral EndGeral CompEndivid IndepFin ImobilPL ImobRecNC PtpCapTerce GiroAtivo MargOp MargLiq ROI ROE
-local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid ImobRecNC GiroAtivo
+* Definir variáveis contábeis (padronizadas e sintéticas)
+local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ///
+    z_LiqCorAjust z_EndGeral z_ImobRecNC z_CompEndivid z_GiroAtivo z_ROI z_ROE
 
-local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
+* Definir variáveis de controle (padronizadas)
+local var_controle `CNAE_vars' `Natureza_vars' z_vlrcontrato ///
+    z_QtdeCNAEsSecundarios z_IdadedeAnos z_QtePenalOutrosOrgaos
 
-
-* Executar a regressão logística
+* Executar a regressão logística no conjunto de treino
 logit FoiPenalizadoSTJ `var_contabeis' `var_controle' if train == 1
 
 * Armazenar os resultados do modelo completo
@@ -695,6 +717,9 @@ Essas variáveis de controle são importantes para isolar o efeito das variávei
 /*******************************************************************************
 6.2 Regressão logística com seleção stepwise a 10% de significância no conjunto de treinamento
 *******************************************************************************/
+* 6.1 Listar todas as variáveis disponíveis
+ds
+
 * Capturar todas as variáveis que começam com "Porte_"
 unab Porte_vars : Porte_*
 
@@ -704,9 +729,13 @@ unab CNAE_vars : CNAE_*
 * Capturar todas as variáveis que começam com "NaturezaJuridica_"
 unab Natureza_vars : NaturezaJuridica_*
 
-* Definir variáveis contábeis e de controle corretamente
-local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid ImobRecNC GiroAtivo
-local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
+* Definir variáveis contábeis (padronizadas e sintéticas)
+local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ///
+    z_LiqCorAjust z_EndGeral z_ImobRecNC z_CompEndivid z_GiroAtivo z_ROI z_ROE
+
+* Definir variáveis de controle (padronizadas)
+local var_controle `CNAE_vars' `Natureza_vars' z_vlrcontrato ///
+    z_QtdeCNAEsSecundarios z_IdadedeAnos z_QtePenalOutrosOrgaos
 
 *Regressão logística com seleção stepwise a 10% 
 sw, pr(.10): logit FoiPenalizadoSTJ `var_contabeis' `var_controle' if train == 1
@@ -1011,23 +1040,25 @@ modelos com muitas variáveis e potencial multicolinearidade.
 
 *******************************************************************************/
 
+* 6.1 Listar todas as variáveis disponíveis
+ds
+
 * Capturar todas as variáveis que começam com "Porte_"
 unab Porte_vars : Porte_*
 
 * Capturar todas as variáveis que começam com "CNAE_"
 unab CNAE_vars : CNAE_*
 
-* Capturar todas as variáveis que começam com "DivisaoCNAE_"
-unab DivisaoCNAE_vars : DivisaoCNAE_*
-
 * Capturar todas as variáveis que começam com "NaturezaJuridica_"
 unab Natureza_vars : NaturezaJuridica_*
 
-* Definir variáveis contábeis e de controle corretamente
-local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ROI ROE CompEndivid ImobRecNC GiroAtivo
-local var_controle `CNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
+* Definir variáveis contábeis (padronizadas e sintéticas)
+local var_contabeis `Porte_vars' Liquidez_Media_Z Estrutura_Media_Z Margem_Media_Z ///
+    z_LiqCorAjust z_EndGeral z_ImobRecNC z_CompEndivid z_GiroAtivo z_ROI z_ROE
 
-*local var_controle `DivisaoCNAE_vars' `Natureza_vars' log_vlrcon~o  QtdeCNAEsS~s IdadedeAnos QtePenalOu~s
+* Definir variáveis de controle (padronizadas)
+local var_controle `CNAE_vars' `Natureza_vars' z_vlrcontrato ///
+    z_QtdeCNAEsSecundarios z_IdadedeAnos z_QtePenalOutrosOrgaos
 
 * Consolidar todas as variáveis em uma macro
 local todas_vars `var_contabeis' `var_controle'
